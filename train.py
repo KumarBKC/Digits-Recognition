@@ -87,7 +87,7 @@ def main() -> None:
 
     # 6. Scheduler: ReduceLROnPlateau
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=5, verbose=True
+        optimizer, mode="min", factor=0.5, patience=5
     )
 
     # 7. Train
