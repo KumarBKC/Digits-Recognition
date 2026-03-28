@@ -212,8 +212,6 @@ class ResultDisplay(tk.Frame):
         for bar, lbl in zip(self._prob_bars, self._prob_labels):
             bar.delete("all")
             lbl.config(text="0.0%")
-        for lbl in self._history_labels:
-            lbl.config(text="")
 
     # Internal helpers
 

@@ -17,6 +17,7 @@ class CanvasPanel(tk.Frame):
         self,
         parent: tk.Widget,
         on_predict: Optional[Callable] = None,
+        on_clear: Optional[Callable] = None,
         **kwargs,
     ):
         """
@@ -24,9 +25,11 @@ class CanvasPanel(tk.Frame):
             parent: Parent Tkinter widget.
             on_predict: Callable invoked with a PIL.Image when recognition
                         is triggered.  Signature: ``callback(image: PIL.Image)``.
+            on_clear: Callable invoked when the canvas is cleared or empty.
         """
         super().__init__(parent, bg="#1e1e2e", **kwargs)
         self._on_predict = on_predict
+        self._on_clear = on_clear
         self._auto_recognize = tk.BooleanVar(value=True)
         self._brush_size = tk.IntVar(value=14)
         self._prev_x: Optional[int] = None
@@ -152,6 +155,8 @@ class CanvasPanel(tk.Frame):
         self._canvas.delete("all")
         self._pil_image = Image.new("L", (self.CANVAS_SIZE, self.CANVAS_SIZE), 255)
         self._pil_draw = ImageDraw.Draw(self._pil_image)
+        if self._on_clear:
+            self._on_clear()
 
     def get_canvas_image(self) -> Image.Image:
         """Return the current canvas content as a 280×280 grayscale PIL image."""
@@ -159,6 +164,11 @@ class CanvasPanel(tk.Frame):
 
     def predict_canvas(self) -> None:
         """Capture canvas content and invoke the prediction callback."""
+        if self._pil_image.getextrema() == (255, 255):
+            if self._on_clear:
+                self._on_clear()
+            return
+
         if self._on_predict is not None:
             img = self.get_canvas_image()
             self._on_predict(img)

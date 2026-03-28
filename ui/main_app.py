@@ -153,6 +153,7 @@ class MainApp(tk.Tk):
         self._canvas_panel = CanvasPanel(
             self._panel_frame,
             on_predict=self._predict_image,
+            on_clear=self._result_display.clear,
         )
 
         # Show last-used mode
