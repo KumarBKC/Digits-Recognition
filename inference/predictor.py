@@ -38,9 +38,7 @@ class DigitPredictor:
 
         self.preprocessor = ImagePreprocessor(device=str(self.device))
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def preprocess(self, image) -> torch.Tensor:
         """Preprocess any supported input to a model-ready tensor."""

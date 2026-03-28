@@ -18,9 +18,7 @@ class ImagePreprocessor:
         self.device = torch.device(device)
         self.debug = debug
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def preprocess_for_inference(self, image) -> torch.Tensor:
         """Convert any supported input to a model-ready tensor.
@@ -65,9 +63,7 @@ class ImagePreprocessor:
 
         return tensor
 
-    # ------------------------------------------------------------------
     # Internal helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _to_gray(image) -> np.ndarray:

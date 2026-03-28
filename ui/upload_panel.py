@@ -41,9 +41,7 @@ class UploadPanel(tk.Frame):
         self._photo: Optional[ImageTk.PhotoImage] = None
         self._build_ui()
 
-    # ------------------------------------------------------------------
     # UI construction
-    # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
         # Drop zone
@@ -106,9 +104,7 @@ class UploadPanel(tk.Frame):
             font=("Helvetica", 10),
         ).pack(pady=(2, 8))
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def load_image(self, path: str) -> None:
         """Open an image from *path*, display a preview, and run prediction."""
@@ -130,9 +126,7 @@ class UploadPanel(tk.Frame):
         else:
             self._predict_single(img)
 
-    # ------------------------------------------------------------------
     # Internal helpers
-    # ------------------------------------------------------------------
 
     def _browse(self) -> None:
         """Open a file dialog and load the selected file."""

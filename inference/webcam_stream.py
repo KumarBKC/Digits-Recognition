@@ -65,9 +65,7 @@ class WebcamStream:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-    # ------------------------------------------------------------------
     # Frame capture
-    # ------------------------------------------------------------------
 
     def get_frame(self) -> np.ndarray:
         """Return the latest BGR frame; black placeholder on failure."""
@@ -76,9 +74,7 @@ class WebcamStream:
             return np.zeros((480, 640, 3), dtype=np.uint8)
         return frame
 
-    # ------------------------------------------------------------------
     # ROI detection
-    # ------------------------------------------------------------------
 
     def detect_digit_region(self, frame: np.ndarray) -> List[BoundingBox]:
         """Detect digit bounding boxes in a BGR frame.
@@ -139,9 +135,7 @@ class WebcamStream:
 
         return _nms(boxes, iou_threshold=0.5)
 
-    # ------------------------------------------------------------------
     # Frame annotation
-    # ------------------------------------------------------------------
 
     def annotate_frame(
         self,
@@ -200,9 +194,7 @@ class WebcamStream:
 
         return annotated
 
-    # ------------------------------------------------------------------
     # Cleanup
-    # ------------------------------------------------------------------
 
     def release(self) -> None:
         """Release the camera resource."""

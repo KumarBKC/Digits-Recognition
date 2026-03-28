@@ -16,9 +16,7 @@ class MetricsTracker:
         self._all_preds: List[int] = []
         self._all_labels: List[int] = []
 
-    # ------------------------------------------------------------------
     # Accumulation
-    # ------------------------------------------------------------------
 
     def update(self, preds_tensor: torch.Tensor, labels_tensor: torch.Tensor) -> None:
         """Append batch predictions and ground-truth labels.
@@ -35,9 +33,7 @@ class MetricsTracker:
         self._all_preds = []
         self._all_labels = []
 
-    # ------------------------------------------------------------------
     # Computation
-    # ------------------------------------------------------------------
 
     def compute(self) -> Dict:
         """Compute all metrics over accumulated predictions.

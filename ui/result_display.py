@@ -16,9 +16,7 @@ class ResultDisplay(tk.Frame):
         self._build_ui()
         self._history: List[dict] = []
 
-    # ------------------------------------------------------------------
     # UI construction
-    # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
         """Create all child widgets."""
@@ -157,9 +155,7 @@ class ResultDisplay(tk.Frame):
             lbl.pack(side=tk.LEFT)
             self._prob_labels.append(lbl)
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def update(self, result) -> None:  # result: PredictionResult
         """Update the display with a new prediction result."""
@@ -219,9 +215,7 @@ class ResultDisplay(tk.Frame):
         for lbl in self._history_labels:
             lbl.config(text="")
 
-    # ------------------------------------------------------------------
     # Internal helpers
-    # ------------------------------------------------------------------
 
     def _copy_to_clipboard(self) -> None:
         digit_text = self._digit_var.get()

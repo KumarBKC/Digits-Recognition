@@ -74,9 +74,7 @@ class MainApp(tk.Tk):
         self._show_loading()
         threading.Thread(target=self._load_model, daemon=True).start()
 
-    # ------------------------------------------------------------------
     # UI Construction
-    # ------------------------------------------------------------------
 
     def _build_menu_bar(self) -> None:
         """Build a minimal menu bar."""
@@ -178,9 +176,7 @@ class MainApp(tk.Tk):
                 font=("Helvetica", 9),
             ).pack(side=tk.LEFT, padx=12)
 
-    # ------------------------------------------------------------------
     # Mode switching
-    # ------------------------------------------------------------------
 
     def _switch_mode(self, mode: str, save: bool = True) -> None:
         """Show the panel for *mode* and hide all others."""
@@ -212,18 +208,14 @@ class MainApp(tk.Tk):
 
         self._result_display.clear()
 
-    # ------------------------------------------------------------------
     # Keyboard shortcuts
-    # ------------------------------------------------------------------
 
     def _bind_shortcuts(self) -> None:
         self.bind("<Control-Key-1>", lambda _: self._switch_mode(MODE_WEBCAM))
         self.bind("<Control-Key-2>", lambda _: self._switch_mode(MODE_UPLOAD))
         self.bind("<Control-Key-3>", lambda _: self._switch_mode(MODE_DRAW))
 
-    # ------------------------------------------------------------------
     # Model loading
-    # ------------------------------------------------------------------
 
     def _show_loading(self) -> None:
         self._loading_label = tk.Label(
@@ -262,9 +254,7 @@ class MainApp(tk.Tk):
             if self._loading_label is not None:
                 self.after(0, self._loading_label.destroy)
 
-    # ------------------------------------------------------------------
     # Prediction callbacks
-    # ------------------------------------------------------------------
 
     def _predict_image(self, image) -> None:
         """Predict a single image (PIL or ndarray) and update the display."""
@@ -290,18 +280,14 @@ class MainApp(tk.Tk):
         """Update the result display from any thread."""
         self.after(0, lambda: self._result_display.update(result))
 
-    # ------------------------------------------------------------------
     # File menu helpers
-    # ------------------------------------------------------------------
 
     def _open_image(self) -> None:
         self._switch_mode(MODE_UPLOAD)
         self._upload_panel._browse()
 
 
-# ---------------------------------------------------------------------------
 # Entry point
-# ---------------------------------------------------------------------------
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Digit Recognition UI")

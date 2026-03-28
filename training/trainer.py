@@ -42,9 +42,7 @@ class Trainer:
 
         os.makedirs(checkpoint_dir, exist_ok=True)
 
-    # ------------------------------------------------------------------
     # Single-epoch training
-    # ------------------------------------------------------------------
 
     def train_one_epoch(self, epoch_num: int) -> tuple[float, float]:
         """Run one training epoch.
@@ -79,9 +77,7 @@ class Trainer:
         epoch_acc = correct / max(total, 1)
         return epoch_loss, epoch_acc
 
-    # ------------------------------------------------------------------
     # Validation
-    # ------------------------------------------------------------------
 
     def validate(self) -> tuple[float, float]:
         """Run a full validation pass.
@@ -111,9 +107,7 @@ class Trainer:
         val_acc = correct / max(total, 1)
         return val_loss, val_acc
 
-    # ------------------------------------------------------------------
     # Full training loop
-    # ------------------------------------------------------------------
 
     def fit(self, num_epochs: int) -> Dict[str, List[float]]:
         """Train for *num_epochs* epochs with early stopping.
@@ -191,9 +185,7 @@ class Trainer:
 
         return history
 
-    # ------------------------------------------------------------------
     # Checkpoint loading
-    # ------------------------------------------------------------------
 
     def load_checkpoint(self, path: str) -> dict:
         """Restore model and optimizer state from a checkpoint file."""

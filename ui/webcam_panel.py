@@ -47,9 +47,7 @@ class WebcamPanel(tk.Frame):
 
         self._build_ui()
 
-    # ------------------------------------------------------------------
     # UI construction
-    # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
         # Controls bar
@@ -120,9 +118,7 @@ class WebcamPanel(tk.Frame):
             font=("Helvetica", 9),
         ).pack()
 
-    # ------------------------------------------------------------------
     # Stream control
-    # ------------------------------------------------------------------
 
     def _toggle(self) -> None:
         if self._running:
@@ -159,9 +155,7 @@ class WebcamPanel(tk.Frame):
         self._toggle_btn.config(text="▶ Start", bg="#a6e3a1")
         self._fps_var.set("FPS: —")
 
-    # ------------------------------------------------------------------
     # Frame update loop
-    # ------------------------------------------------------------------
 
     def _update_frame(self) -> None:
         if not self._running or self._stream is None:
@@ -209,9 +203,7 @@ class WebcamPanel(tk.Frame):
 
         self._after_id = self.after(self.REFRESH_MS, self._update_frame)
 
-    # ------------------------------------------------------------------
     # Cleanup
-    # ------------------------------------------------------------------
 
     def destroy(self) -> None:
         self._stop()

@@ -45,9 +45,7 @@ class DigitDataset(Dataset):
         self.samples: List[Tuple[str, int]] = []  # [(path, label), ...]
         self._load_samples()
 
-    # ------------------------------------------------------------------
     # Internal helpers
-    # ------------------------------------------------------------------
 
     def _load_samples(self) -> None:
         """Scan root_dir sub-folders and populate self.samples."""
@@ -63,9 +61,7 @@ class DigitDataset(Dataset):
                 if fname.lower().endswith((".png", ".jpg", ".jpeg", ".bmp")):
                     self.samples.append((os.path.join(class_dir, fname), label))
 
-    # ------------------------------------------------------------------
     # Dataset interface
-    # ------------------------------------------------------------------
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -77,9 +73,7 @@ class DigitDataset(Dataset):
             img = self.transform(img)
         return img, label
 
-    # ------------------------------------------------------------------
     # Utility methods
-    # ------------------------------------------------------------------
 
     def get_class_distribution(self) -> Dict[int, int]:
         """Return sample count per digit class."""
@@ -110,9 +104,7 @@ class DigitDataset(Dataset):
         plt.show()
 
 
-# ---------------------------------------------------------------------------
 # Factory function
-# ---------------------------------------------------------------------------
 
 
 def create_dataloaders(
@@ -177,9 +169,7 @@ def create_dataloaders(
     return train_loader, val_loader, class_weights
 
 
-# ---------------------------------------------------------------------------
 # CLI entry point for validation
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     import argparse

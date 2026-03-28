@@ -38,9 +38,7 @@ class CanvasPanel(tk.Frame):
 
         self._build_ui()
 
-    # ------------------------------------------------------------------
     # UI construction
-    # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
         # Controls row
@@ -114,9 +112,7 @@ class CanvasPanel(tk.Frame):
         self._canvas.bind("<Button-1>", self._on_press)
         self._canvas.bind("<B3-Motion>", self._on_erase)  # right-click = erase
 
-    # ------------------------------------------------------------------
     # Drawing event handlers
-    # ------------------------------------------------------------------
 
     def _on_press(self, event: tk.Event) -> None:
         self._prev_x = event.x
@@ -149,9 +145,7 @@ class CanvasPanel(tk.Frame):
         if self._auto_recognize.get():
             self.predict_canvas()
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def clear(self) -> None:
         """Clear the canvas and reset the PIL backing image."""
