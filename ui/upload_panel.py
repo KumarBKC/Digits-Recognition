@@ -34,7 +34,7 @@ class UploadPanel(tk.Frame):
             on_sequence: Callback for multi-digit strips.
                          Signature: ``callback(images: list[PIL.Image])``.
         """
-        super().__init__(parent, bg="#1e1e2e", **kwargs)
+        super().__init__(parent, bg="#0D0D10", **kwargs)
         self._on_predict = on_predict
         self._on_sequence = on_sequence
         self._current_image: Optional[Image.Image] = None
@@ -48,8 +48,8 @@ class UploadPanel(tk.Frame):
         self._drop_zone = tk.Label(
             self,
             text="Drop image here\nor click to browse",
-            bg="#313244",
-            fg="#585b70",
+            bg="#1C1C21",
+            fg="#9CA3AF",
             font=("Helvetica", 13),
             relief=tk.RIDGE,
             cursor="hand2",
@@ -62,22 +62,22 @@ class UploadPanel(tk.Frame):
         # Preview area
         self._preview_label = tk.Label(
             self,
-            bg="#313244",
+            bg="#1C1C21",
             width=self.PREVIEW_W,
             height=self.PREVIEW_H,
         )
         self._preview_label.pack(padx=12, pady=4)
 
         # Buttons row
-        btn_frame = tk.Frame(self, bg="#1e1e2e")
+        btn_frame = tk.Frame(self, bg="#0D0D10")
         btn_frame.pack(pady=6)
 
         tk.Button(
             btn_frame,
             text="Browse…",
             command=self._browse,
-            bg="#89b4fa",
-            fg="#1e1e2e",
+            bg="#3B82F6",
+            fg="#FFFFFF",
             relief=tk.FLAT,
             font=("Helvetica", 10, "bold"),
             cursor="hand2",
@@ -87,8 +87,8 @@ class UploadPanel(tk.Frame):
             btn_frame,
             text="Detect All Digits",
             command=self._detect_all,
-            bg="#a6e3a1",
-            fg="#1e1e2e",
+            bg="#10B981",
+            fg="#FFFFFF",
             relief=tk.FLAT,
             font=("Helvetica", 10, "bold"),
             cursor="hand2",
@@ -99,8 +99,8 @@ class UploadPanel(tk.Frame):
         tk.Label(
             self,
             textvariable=self._status_var,
-            bg="#1e1e2e",
-            fg="#a6adc8",
+            bg="#0D0D10",
+            fg="#9CA3AF",
             font=("Helvetica", 10),
         ).pack(pady=(2, 8))
 

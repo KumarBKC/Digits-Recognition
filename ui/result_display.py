@@ -12,7 +12,7 @@ class ResultDisplay(tk.Frame):
     HISTORY_SIZE = 5
 
     def __init__(self, parent: tk.Widget, **kwargs):
-        super().__init__(parent, bg="#1e1e2e", **kwargs)
+        super().__init__(parent, bg="#0D0D10", **kwargs)
         self._build_ui()
         self._history: List[dict] = []
 
@@ -24,8 +24,8 @@ class ResultDisplay(tk.Frame):
         tk.Label(
             self,
             text="PREDICTION RESULT",
-            bg="#1e1e2e",
-            fg="#cdd6f4",
+            bg="#0D0D10",
+            fg="#F3F4F6",
             font=("Helvetica", 11, "bold"),
         ).pack(pady=(10, 4))
 
@@ -34,8 +34,8 @@ class ResultDisplay(tk.Frame):
         tk.Label(
             self,
             textvariable=self._digit_var,
-            bg="#313244",
-            fg="#cba6f7",
+            bg="#1C1C21",
+            fg="#FFFFFF",
             font=("Helvetica", 96, "bold"),
             width=3,
             relief=tk.RIDGE,
@@ -46,14 +46,14 @@ class ResultDisplay(tk.Frame):
         tk.Label(
             self,
             textvariable=self._conf_var,
-            bg="#1e1e2e",
-            fg="#a6e3a1",
+            bg="#0D0D10",
+            fg="#34D399",
             font=("Helvetica", 13),
         ).pack()
 
         # Confidence bar canvas
         self._conf_canvas = tk.Canvas(
-            self, bg="#313244", height=18, width=220, highlightthickness=0
+            self, bg="#1C1C21", height=18, width=220, highlightthickness=0
         )
         self._conf_canvas.pack(padx=12, pady=(2, 10))
 
@@ -61,12 +61,12 @@ class ResultDisplay(tk.Frame):
         tk.Label(
             self,
             text="All probabilities:",
-            bg="#1e1e2e",
-            fg="#cdd6f4",
+            bg="#0D0D10",
+            fg="#F3F4F6",
             font=("Helvetica", 10),
         ).pack(anchor=tk.W, padx=12)
 
-        self._prob_frame = tk.Frame(self, bg="#1e1e2e")
+        self._prob_frame = tk.Frame(self, bg="#0D0D10")
         self._prob_frame.pack(fill=tk.X, padx=12, pady=4)
         self._prob_bars: List[tk.Canvas] = []
         self._prob_labels: List[tk.Label] = []
@@ -76,20 +76,20 @@ class ResultDisplay(tk.Frame):
         tk.Label(
             self,
             text="Recent predictions:",
-            bg="#1e1e2e",
-            fg="#cdd6f4",
+            bg="#0D0D10",
+            fg="#F3F4F6",
             font=("Helvetica", 10),
         ).pack(anchor=tk.W, padx=12, pady=(8, 2))
 
-        self._history_frame = tk.Frame(self, bg="#1e1e2e")
+        self._history_frame = tk.Frame(self, bg="#0D0D10")
         self._history_frame.pack(padx=12, pady=2)
         self._history_labels: List[tk.Label] = []
         for _ in range(self.HISTORY_SIZE):
             lbl = tk.Label(
                 self._history_frame,
                 text="",
-                bg="#313244",
-                fg="#cdd6f4",
+                bg="#1C1C21",
+                fg="#F3F4F6",
                 font=("Helvetica", 18, "bold"),
                 width=2,
                 relief=tk.RIDGE,
@@ -102,8 +102,8 @@ class ResultDisplay(tk.Frame):
             self,
             text="Copy Result",
             command=self._copy_to_clipboard,
-            bg="#45475a",
-            fg="#cdd6f4",
+            bg="#3B82F6",
+            fg="#FFFFFF",
             relief=tk.FLAT,
             cursor="hand2",
         ).pack(pady=6)
@@ -113,8 +113,8 @@ class ResultDisplay(tk.Frame):
         tk.Label(
             self,
             textvariable=self._time_var,
-            bg="#1e1e2e",
-            fg="#585b70",
+            bg="#0D0D10",
+            fg="#9CA3AF",
             font=("Helvetica", 9),
         ).pack(pady=(0, 8))
 
@@ -124,21 +124,21 @@ class ResultDisplay(tk.Frame):
         BAR_H = 12
 
         for digit in range(10):
-            row = tk.Frame(self._prob_frame, bg="#1e1e2e")
+            row = tk.Frame(self._prob_frame, bg="#0D0D10")
             row.pack(fill=tk.X, pady=1)
 
             tk.Label(
                 row,
                 text=f"{digit}:",
-                bg="#1e1e2e",
-                fg="#cdd6f4",
+                bg="#0D0D10",
+                fg="#F3F4F6",
                 font=("Helvetica", 9),
                 width=2,
                 anchor=tk.E,
             ).pack(side=tk.LEFT)
 
             bar = tk.Canvas(
-                row, bg="#313244", height=BAR_H, width=BAR_W, highlightthickness=0
+                row, bg="#1C1C21", height=BAR_H, width=BAR_W, highlightthickness=0
             )
             bar.pack(side=tk.LEFT, padx=(3, 4))
             self._prob_bars.append(bar)
@@ -146,8 +146,8 @@ class ResultDisplay(tk.Frame):
             lbl = tk.Label(
                 row,
                 text="0.0%",
-                bg="#1e1e2e",
-                fg="#cdd6f4",
+                bg="#0D0D10",
+                fg="#F3F4F6",
                 font=("Helvetica", 9),
                 width=6,
                 anchor=tk.W,
@@ -166,11 +166,11 @@ class ResultDisplay(tk.Frame):
         # Confidence bar colour
         conf = result.confidence
         if conf > 0.80:
-            bar_color = "#a6e3a1"   # green
+            bar_color = "#34D399"   # green
         elif conf >= 0.50:
-            bar_color = "#fab387"   # orange
+            bar_color = "#FBBF24"   # orange
         else:
-            bar_color = "#f38ba8"   # red
+            bar_color = "#F87171"   # red
 
         bar_width = int(conf * 220)
         self._conf_canvas.delete("all")
@@ -179,7 +179,7 @@ class ResultDisplay(tk.Frame):
                 0, 0, bar_width, 18, fill=bar_color, outline=""
             )
         self._conf_canvas.create_text(
-            110, 9, text=f"{conf * 100:.1f}%", fill="#1e1e2e", font=("Helvetica", 9, "bold")
+            110, 9, text=f"{conf * 100:.1f}%", fill="#FFFFFF", font=("Helvetica", 9, "bold")
         )
 
         # Per-class probability bars
@@ -189,7 +189,7 @@ class ResultDisplay(tk.Frame):
             bar.delete("all")
             fill_w = int(prob * BAR_W)
             if fill_w > 0:
-                color = "#cba6f7" if digit == result.digit else "#45475a"
+                color = "#FFFFFF" if digit == result.digit else "#26262B"
                 bar.create_rectangle(0, 0, fill_w, 12, fill=color, outline="")
             self._prob_labels[digit].config(text=f"{prob * 100:.1f}%")
 

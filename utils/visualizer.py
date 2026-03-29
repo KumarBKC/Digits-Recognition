@@ -27,7 +27,7 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
 
     fig, (ax_loss, ax_acc) = plt.subplots(1, 2, figsize=(12, 5))
 
-    # --- Loss ---
+    # Loss
     ax_loss.plot(epochs, history["train_loss"], label="Train loss")
     ax_loss.plot(epochs, history["val_loss"], label="Val loss")
     ax_loss.axvline(x=best_epoch, color="gray", linestyle="--", alpha=0.7,
@@ -38,7 +38,7 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
     ax_loss.legend()
     ax_loss.grid(True, alpha=0.3)
 
-    # --- Accuracy ---
+    # Accuracy
     ax_acc.plot(epochs, [a * 100 for a in history["train_acc"]], label="Train acc")
     ax_acc.plot(epochs, [a * 100 for a in history["val_acc"]], label="Val acc")
     ax_acc.axvline(x=best_epoch, color="gray", linestyle="--", alpha=0.7,

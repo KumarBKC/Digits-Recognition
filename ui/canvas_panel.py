@@ -7,7 +7,6 @@ from typing import Callable, Optional
 
 from PIL import Image, ImageDraw
 
-
 class CanvasPanel(tk.Frame):
     """Tkinter panel with a drawing canvas for mouse/touch digit input."""
 
@@ -27,7 +26,7 @@ class CanvasPanel(tk.Frame):
                         is triggered.  Signature: ``callback(image: PIL.Image)``.
             on_clear: Callable invoked when the canvas is cleared or empty.
         """
-        super().__init__(parent, bg="#1e1e2e", **kwargs)
+        super().__init__(parent, bg="#0D0D10", **kwargs)
         self._on_predict = on_predict
         self._on_clear = on_clear
         self._auto_recognize = tk.BooleanVar(value=True)
@@ -45,11 +44,11 @@ class CanvasPanel(tk.Frame):
 
     def _build_ui(self) -> None:
         # Controls row
-        controls = tk.Frame(self, bg="#1e1e2e")
+        controls = tk.Frame(self, bg="#0D0D10")
         controls.pack(fill=tk.X, padx=8, pady=(8, 0))
 
         tk.Label(
-            controls, text="Brush:", bg="#1e1e2e", fg="#cdd6f4", font=("Helvetica", 10)
+            controls, text="Brush:", bg="#0D0D10", fg="#F3F4F6", font=("Helvetica", 10)
         ).pack(side=tk.LEFT)
 
         tk.Scale(
@@ -58,8 +57,8 @@ class CanvasPanel(tk.Frame):
             from_=8,
             to=24,
             orient=tk.HORIZONTAL,
-            bg="#1e1e2e",
-            fg="#cdd6f4",
+            bg="#0D0D10",
+            fg="#F3F4F6",
             highlightthickness=0,
             length=100,
         ).pack(side=tk.LEFT, padx=(2, 8))
@@ -68,10 +67,10 @@ class CanvasPanel(tk.Frame):
             controls,
             text="Auto-recognize",
             variable=self._auto_recognize,
-            bg="#1e1e2e",
-            fg="#cdd6f4",
-            selectcolor="#313244",
-            activebackground="#1e1e2e",
+            bg="#0D0D10",
+            fg="#F3F4F6",
+            selectcolor="#26262B",
+            activebackground="#0D0D10",
             font=("Helvetica", 10),
         ).pack(side=tk.LEFT)
 
@@ -79,8 +78,8 @@ class CanvasPanel(tk.Frame):
             controls,
             text="Clear",
             command=self.clear,
-            bg="#f38ba8",
-            fg="#1e1e2e",
+            bg="#EF4444",
+            fg="#FFFFFF",
             relief=tk.FLAT,
             font=("Helvetica", 10, "bold"),
             cursor="hand2",
@@ -90,8 +89,8 @@ class CanvasPanel(tk.Frame):
             controls,
             text="Recognize",
             command=self.predict_canvas,
-            bg="#a6e3a1",
-            fg="#1e1e2e",
+            bg="#10B981",
+            fg="#FFFFFF",
             relief=tk.FLAT,
             font=("Helvetica", 10, "bold"),
             cursor="hand2",
@@ -105,7 +104,7 @@ class CanvasPanel(tk.Frame):
             bg="white",
             cursor="crosshair",
             highlightthickness=2,
-            highlightbackground="#585b70",
+            highlightbackground="#26262B",
         )
         self._canvas.pack(padx=8, pady=8)
 

@@ -33,7 +33,7 @@ class WebcamPanel(tk.Frame):
             on_result: Callback invoked with the highest-confidence
                        :class:`PredictionResult` when a digit is found.
         """
-        super().__init__(parent, bg="#1e1e2e", **kwargs)
+        super().__init__(parent, bg="#0D0D10", **kwargs)
         self._predictor = predictor
         self._on_result = on_result
         self._stream: Optional[WebcamStream] = None
@@ -51,14 +51,14 @@ class WebcamPanel(tk.Frame):
 
     def _build_ui(self) -> None:
         # Controls bar
-        controls = tk.Frame(self, bg="#1e1e2e")
+        controls = tk.Frame(self, bg="#0D0D10")
         controls.pack(fill=tk.X, padx=8, pady=(8, 0))
 
         # Camera selector
-        tk.Label(controls, text="Camera:", bg="#1e1e2e", fg="#cdd6f4",
+        tk.Label(controls, text="Camera:", bg="#0D0D10", fg="#F3F4F6",
                  font=("Helvetica", 10)).pack(side=tk.LEFT)
         cam_menu = tk.OptionMenu(controls, self._camera_idx, 0, 1, 2, 3)
-        cam_menu.config(bg="#45475a", fg="#cdd6f4", relief=tk.FLAT, width=3)
+        cam_menu.config(bg="#26262B", fg="#F3F4F6", relief=tk.FLAT, width=3)
         cam_menu.pack(side=tk.LEFT, padx=(2, 10))
 
         # Start / Stop button
@@ -66,8 +66,8 @@ class WebcamPanel(tk.Frame):
             controls,
             text="▶ Start",
             command=self._toggle,
-            bg="#a6e3a1",
-            fg="#1e1e2e",
+            bg="#10B981",
+            fg="#FFFFFF",
             relief=tk.FLAT,
             font=("Helvetica", 10, "bold"),
             cursor="hand2",
@@ -75,7 +75,7 @@ class WebcamPanel(tk.Frame):
         self._toggle_btn.pack(side=tk.LEFT, padx=4)
 
         # Processing mode toggle
-        tk.Label(controls, text="Process:", bg="#1e1e2e", fg="#cdd6f4",
+        tk.Label(controls, text="Process:", bg="#0D0D10", fg="#F3F4F6",
                  font=("Helvetica", 10)).pack(side=tk.LEFT, padx=(10, 2))
         for label, val in (("All frames", 1), ("Every 3rd", 3)):
             tk.Radiobutton(
@@ -83,10 +83,10 @@ class WebcamPanel(tk.Frame):
                 text=label,
                 variable=self._process_every,
                 value=val,
-                bg="#1e1e2e",
-                fg="#cdd6f4",
-                selectcolor="#313244",
-                activebackground="#1e1e2e",
+                bg="#0D0D10",
+                fg="#F3F4F6",
+                selectcolor="#26262B",
+                activebackground="#0D0D10",
                 font=("Helvetica", 10),
             ).pack(side=tk.LEFT)
 
@@ -95,10 +95,10 @@ class WebcamPanel(tk.Frame):
             controls,
             text="Mirror",
             variable=self._mirror,
-            bg="#1e1e2e",
-            fg="#cdd6f4",
-            selectcolor="#313244",
-            activebackground="#1e1e2e",
+            bg="#0D0D10",
+            fg="#F3F4F6",
+            selectcolor="#26262B",
+            activebackground="#0D0D10",
             font=("Helvetica", 10),
         ).pack(side=tk.LEFT, padx=(10, 0))
 
@@ -113,8 +113,8 @@ class WebcamPanel(tk.Frame):
         tk.Label(
             self,
             textvariable=self._fps_var,
-            bg="#1e1e2e",
-            fg="#a6adc8",
+            bg="#0D0D10",
+            fg="#9CA3AF",
             font=("Helvetica", 9),
         ).pack()
 
@@ -139,7 +139,7 @@ class WebcamPanel(tk.Frame):
             return
 
         self._running = True
-        self._toggle_btn.config(text="■ Stop", bg="#f38ba8")
+        self._toggle_btn.config(text="■ Stop", bg="#EF4444")
         self._frame_count = 0
         self._t0 = __import__("time").perf_counter()
         self._update_frame()
@@ -152,7 +152,7 @@ class WebcamPanel(tk.Frame):
         if self._stream is not None:
             self._stream.release()
             self._stream = None
-        self._toggle_btn.config(text="▶ Start", bg="#a6e3a1")
+        self._toggle_btn.config(text="▶ Start", bg="#10B981")
         self._fps_var.set("FPS: —")
 
     # Frame update loop

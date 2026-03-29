@@ -55,7 +55,7 @@ class MainApp(tk.Tk):
         super().__init__()
         self.title("Digit Recognition System")
         self.minsize(self.MIN_W, self.MIN_H)
-        self.configure(bg="#1e1e2e")
+        self.configure(bg="#0D0D10")
 
         self._model_path = model_path
         self._predictor: Optional[DigitPredictor] = None
@@ -78,16 +78,16 @@ class MainApp(tk.Tk):
 
     def _build_menu_bar(self) -> None:
         """Build a minimal menu bar."""
-        menubar = tk.Menu(self, bg="#313244", fg="#cdd6f4")
+        menubar = tk.Menu(self, bg="#1C1C21", fg="#F3F4F6")
         self.config(menu=menubar)
 
-        file_menu = tk.Menu(menubar, tearoff=False, bg="#313244", fg="#cdd6f4")
+        file_menu = tk.Menu(menubar, tearoff=False, bg="#1C1C21", fg="#F3F4F6")
         file_menu.add_command(label="Open image…", command=self._open_image)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
 
-        view_menu = tk.Menu(menubar, tearoff=False, bg="#313244", fg="#cdd6f4")
+        view_menu = tk.Menu(menubar, tearoff=False, bg="#1C1C21", fg="#F3F4F6")
         view_menu.add_command(label="Webcam (Ctrl+1)", command=lambda: self._switch_mode(MODE_WEBCAM))
         view_menu.add_command(label="Upload (Ctrl+2)", command=lambda: self._switch_mode(MODE_UPLOAD))
         view_menu.add_command(label="Draw (Ctrl+3)", command=lambda: self._switch_mode(MODE_DRAW))
@@ -95,18 +95,18 @@ class MainApp(tk.Tk):
 
     def _build_header(self) -> None:
         """Build the top navigation bar with mode buttons."""
-        header = tk.Frame(self, bg="#181825", pady=6)
+        header = tk.Frame(self, bg="#000000", pady=6)
         header.pack(fill=tk.X)
 
         tk.Label(
             header,
             text="Digit Recognition System",
-            bg="#181825",
-            fg="#cba6f7",
+            bg="#000000",
+            fg="#FFFFFF",
             font=("Helvetica", 14, "bold"),
         ).pack(side=tk.LEFT, padx=12)
 
-        btn_frame = tk.Frame(header, bg="#181825")
+        btn_frame = tk.Frame(header, bg="#000000")
         btn_frame.pack(side=tk.RIGHT, padx=8)
 
         self._mode_buttons: dict[str, tk.Button] = {}
@@ -115,8 +115,8 @@ class MainApp(tk.Tk):
                 btn_frame,
                 text=label,
                 command=lambda m=mode: self._switch_mode(m),
-                bg="#313244",
-                fg="#cdd6f4",
+                bg="#1F2937",
+                fg="#F3F4F6",
                 relief=tk.FLAT,
                 font=("Helvetica", 10, "bold"),
                 cursor="hand2",
@@ -128,11 +128,11 @@ class MainApp(tk.Tk):
 
     def _build_main_area(self) -> None:
         """Build the two-column main area (active panel + result display)."""
-        main = tk.Frame(self, bg="#1e1e2e")
+        main = tk.Frame(self, bg="#0D0D10")
         main.pack(fill=tk.BOTH, expand=True)
 
         # Left: active panel area
-        self._panel_frame = tk.Frame(main, bg="#313244")
+        self._panel_frame = tk.Frame(main, bg="#1C1C21")
         self._panel_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Right: result display
@@ -162,7 +162,7 @@ class MainApp(tk.Tk):
 
     def _build_status_bar(self) -> None:
         """Build the bottom status bar."""
-        status_bar = tk.Frame(self, bg="#181825", pady=4)
+        status_bar = tk.Frame(self, bg="#000000", pady=4)
         status_bar.pack(fill=tk.X, side=tk.BOTTOM)
 
         self._status_device_var = tk.StringVar(value="Device: —")
@@ -172,8 +172,8 @@ class MainApp(tk.Tk):
             tk.Label(
                 status_bar,
                 textvariable=var,
-                bg="#181825",
-                fg="#a6adc8",
+                bg="#000000",
+                fg="#9CA3AF",
                 font=("Helvetica", 9),
             ).pack(side=tk.LEFT, padx=12)
 
@@ -192,7 +192,7 @@ class MainApp(tk.Tk):
 
         # Update button highlights
         for m, btn in self._mode_buttons.items():
-            btn.config(bg="#89b4fa" if m == mode else "#313244")
+            btn.config(bg="#3B82F6" if m == mode else "#1F2937")
 
         # Hide current panel and show new one
         if self._active_panel is not None:
@@ -222,8 +222,8 @@ class MainApp(tk.Tk):
         self._loading_label = tk.Label(
             self._panel_frame,
             text="Loading model…",
-            bg="#313244",
-            fg="#f9e2af",
+            bg="#1C1C21",
+            fg="#F3F4F6",
             font=("Helvetica", 18),
         )
         self._loading_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
