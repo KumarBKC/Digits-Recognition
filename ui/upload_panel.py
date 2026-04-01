@@ -186,9 +186,27 @@ class UploadPanel(tk.Frame):
         # Sort left-to-right
         boxes.sort(key=lambda b: b[0])
 
+        # Merge horizontal overlapping/close boxes (handles multi-stroke digits like '4', '5')
+        merged_boxes = []
+        for b in boxes:
+            if not merged_boxes:
+                merged_boxes.append(list(b))
+            else:
+                lx, ly, lw, lh = merged_boxes[-1]
+                x, y, w, h = b
+                # If bounding boxes are close horizontally (within 12 pixels), merge them
+                if x <= lx + lw + 12:
+                    nx = min(x, lx)
+                    ny = min(y, ly)
+                    nw = max(x + w, lx + lw) - nx
+                    nh = max(y + h, ly + lh) - ny
+                    merged_boxes[-1] = [nx, ny, nw, nh]
+                else:
+                    merged_boxes.append(list(b))
+
         rois: List[Image.Image] = []
-        for x, y, w, h in boxes:
-            pad = 4
+        for x, y, w, h in merged_boxes:
+            pad = 8
             h_img, w_img = gray_np.shape
             x0, y0 = max(0, x - pad), max(0, y - pad)
             x1, y1 = min(w_img, x + w + pad), min(h_img, y + h + pad)
