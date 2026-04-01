@@ -17,6 +17,7 @@ class CanvasPanel(tk.Frame):
         self,
         parent: tk.Widget,
         on_predict: Optional[Callable] = None,
+        on_sequence: Optional[Callable] = None,
         on_clear: Optional[Callable] = None,
         **kwargs,
     ):
@@ -25,10 +26,12 @@ class CanvasPanel(tk.Frame):
             parent: Parent Tkinter widget.
             on_predict: Callable invoked with a PIL.Image when recognition
                         is triggered.  Signature: ``callback(image: PIL.Image)``.
+            on_sequence: Callable for multi-digit parsing.
             on_clear: Callable invoked when the canvas is cleared or empty.
         """
         super().__init__(parent, bg="#0D0D10", **kwargs)
         self._on_predict = on_predict
+        self._on_sequence = on_sequence
         self._on_clear = on_clear
         self._auto_recognize = tk.BooleanVar(value=True)
         self._brush_size = tk.IntVar(value=14)
@@ -213,7 +216,7 @@ class CanvasPanel(tk.Frame):
             self._on_clear()
 
     def get_canvas_image(self) -> Image.Image:
-        """Return the current canvas content as a 280×280 grayscale PIL image."""
+        """Return the current canvas content as a 280x280 grayscale PIL image."""
         return self._pil_image.copy()
 
     def predict_canvas(self) -> None:
@@ -223,8 +226,15 @@ class CanvasPanel(tk.Frame):
                 self._on_clear()
             return
 
-        if self._on_predict is not None:
-            img = self.get_canvas_image()
+        img = self.get_canvas_image()
+        
+        # Determine if there are multiple separated digits
+        from ui.upload_panel import UploadPanel
+        rois = UploadPanel._segment_digits(img)
+
+        if len(rois) > 1 and getattr(self, "_on_sequence", None) is not None:
+            self._on_sequence(rois)
+        elif self._on_predict is not None:
             self._on_predict(img)
 
     def save_image(self) -> None:
