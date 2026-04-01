@@ -24,6 +24,7 @@ class WebcamPanel(tk.Frame):
         parent: tk.Widget,
         predictor: Optional[DigitPredictor] = None,
         on_result=None,
+        on_sequence_result=None,
         **kwargs,
     ):
         """
@@ -36,6 +37,7 @@ class WebcamPanel(tk.Frame):
         super().__init__(parent, bg="#0D0D10", **kwargs)
         self._predictor = predictor
         self._on_result = on_result
+        self._on_sequence_result = on_sequence_result
         self._stream: Optional[WebcamStream] = None
         self._running = False
         self._frame_count = 0
@@ -189,11 +191,17 @@ class WebcamPanel(tk.Frame):
                 result = self._predictor.predict(roi)
                 results.append(result)
 
-            # Notify best result
-            if results and self._on_result is not None:
-                best = max(results, key=lambda r: r.confidence)
-                if self._predictor.is_confident(best):
-                    self._on_result(best)
+            # Notify best result or sequence
+            if results:
+                box_res = sorted(zip(boxes, results), key=lambda br: br[0][0])
+                conf_res = [res for box, res in box_res if self._predictor.is_confident(res)]
+                
+                if len(conf_res) > 1 and getattr(self, "_on_sequence_result", None) is not None:
+                    self._on_sequence_result(conf_res)
+                elif self._on_result is not None:
+                    best = max(results, key=lambda r: r.confidence)
+                    if self._predictor.is_confident(best):
+                        self._on_result(best)
 
         annotated = self._stream.annotate_frame(frame, boxes, results or [None] * len(boxes))
 
