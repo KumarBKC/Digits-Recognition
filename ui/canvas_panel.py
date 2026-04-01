@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter import filedialog, messagebox
 from typing import Callable, Optional
 
 from PIL import Image, ImageDraw
@@ -96,6 +97,17 @@ class CanvasPanel(tk.Frame):
             cursor="hand2",
         ).pack(side=tk.RIGHT, padx=4)
 
+        tk.Button(
+            controls,
+            text="Save",
+            command=self.save_image,
+            bg="#3B82F6",
+            fg="#FFFFFF",
+            relief=tk.FLAT,
+            font=("Helvetica", 10, "bold"),
+            cursor="hand2",
+        ).pack(side=tk.RIGHT, padx=4)
+
         # Drawing canvas
         self._canvas = tk.Canvas(
             self,
@@ -171,3 +183,17 @@ class CanvasPanel(tk.Frame):
         if self._on_predict is not None:
             img = self.get_canvas_image()
             self._on_predict(img)
+
+    def save_image(self) -> None:
+        """Prompt to save the current canvas drawing to a file."""
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG Image", "*.png"), ("JPEG Image", "*.jpg"), ("All Files", "*.*")],
+            title="Save Image As"
+        )
+        if file_path:
+            try:
+                self.get_canvas_image().save(file_path)
+                messagebox.showinfo("Success", f"Image saved to:\n{file_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save image:\n{e}")
