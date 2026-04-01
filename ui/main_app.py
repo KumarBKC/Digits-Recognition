@@ -144,6 +144,7 @@ class MainApp(tk.Tk):
             self._panel_frame,
             predictor=None,  # set later after model loads
             on_result=self._on_prediction,
+            on_sequence_result=self._on_sequence_result,
         )
         self._upload_panel = UploadPanel(
             self._panel_frame,
@@ -153,6 +154,7 @@ class MainApp(tk.Tk):
         self._canvas_panel = CanvasPanel(
             self._panel_frame,
             on_predict=self._predict_image,
+            on_sequence=self._predict_sequence,
             on_clear=self._result_display.clear,
         )
 
@@ -273,14 +275,17 @@ class MainApp(tk.Tk):
         if self._predictor is None:
             return
         results = self._predictor.predict_batch(images)
+        self._on_sequence_result(results)
+
+    def _on_sequence_result(self, results: list) -> None:
+        """Process a list of PredictionResults and display as sequence."""
+        if not results:
+            return
         digits = "".join(str(r.digit) for r in results)
-        
-        # Show best-confidence individual result in the panel
-        if results:
-            best = max(results, key=lambda r: r.confidence)
-            self._on_prediction(best)
-            # Update the full sequence string in the UI
-            self.after(0, lambda d=digits: self._result_display.update_sequence(d))
+        best = max(results, key=lambda r: r.confidence)
+        self._on_prediction(best)
+        self.after(0, lambda d=digits: self._result_display.update_sequence(d))
+
     def _on_prediction(self, result: PredictionResult) -> None:
         """Update the result display from any thread."""
         self.after(0, lambda: self._result_display.update(result))
