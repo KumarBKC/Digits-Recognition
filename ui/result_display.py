@@ -41,6 +41,16 @@ class ResultDisplay(tk.Frame):
             relief=tk.RIDGE,
         ).pack(padx=12, pady=6)
 
+        # Sequence string display (for multi-digit uploads)
+        self._sequence_var = tk.StringVar(value="")
+        tk.Label(
+            self,
+            textvariable=self._sequence_var,
+            bg="#0D0D10",
+            fg="#FBBF24",
+            font=("Helvetica", 16, "bold"),
+        ).pack(pady=(0, 4))
+
         # Confidence label
         self._conf_var = tk.StringVar(value="Confidence: —")
         tk.Label(
@@ -160,6 +170,7 @@ class ResultDisplay(tk.Frame):
     def update(self, result) -> None:  # result: PredictionResult
         """Update the display with a new prediction result."""
         self._digit_var.set(str(result.digit))
+        self._sequence_var.set("")  # clear sequence when updating single digit
         self._conf_var.set(f"Confidence: {result.confidence * 100:.1f}%")
         self._time_var.set(f"Processing: {result.processing_time_ms:.1f} ms")
 
@@ -206,12 +217,17 @@ class ResultDisplay(tk.Frame):
     def clear(self) -> None:
         """Reset all displayed values."""
         self._digit_var.set("—")
+        self._sequence_var.set("")
         self._conf_var.set("Confidence: —")
         self._time_var.set("")
         self._conf_canvas.delete("all")
         for bar, lbl in zip(self._prob_bars, self._prob_labels):
             bar.delete("all")
             lbl.config(text="0.0%")
+
+    def update_sequence(self, sequence_str: str) -> None:
+        """Update the display to show a multi-digit string."""
+        self._sequence_var.set(f"Sequence: {sequence_str}")
 
     # Internal helpers
 
