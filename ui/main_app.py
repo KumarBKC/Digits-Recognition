@@ -271,12 +271,13 @@ class MainApp(tk.Tk):
             return
         results = self._predictor.predict_batch(images)
         digits = "".join(str(r.digit) for r in results)
+        
         # Show best-confidence individual result in the panel
         if results:
             best = max(results, key=lambda r: r.confidence)
             self._on_prediction(best)
-        # TODO: could display full sequence string in a separate label
-
+            # Update the full sequence string in the UI
+            self.after(0, lambda d=digits: self._result_display.update_sequence(d))
     def _on_prediction(self, result: PredictionResult) -> None:
         """Update the result display from any thread."""
         self.after(0, lambda: self._result_display.update(result))
