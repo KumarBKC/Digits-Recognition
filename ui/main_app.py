@@ -82,9 +82,9 @@ class MainApp(tk.Tk):
         self.config(menu=menubar)
 
         file_menu = tk.Menu(menubar, tearoff=False, bg="#1C1C21", fg="#F3F4F6")
-        file_menu.add_command(label="Open image…", command=self._open_image)
+        file_menu.add_command(label="Open image… (Ctrl+O)", command=self._open_image)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.destroy)
+        file_menu.add_command(label="Exit (Ctrl+Q)", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
 
         view_menu = tk.Menu(menubar, tearoff=False, bg="#1C1C21", fg="#F3F4F6")
@@ -215,6 +215,9 @@ class MainApp(tk.Tk):
         self.bind("<Control-Key-1>", lambda _: self._switch_mode(MODE_WEBCAM))
         self.bind("<Control-Key-2>", lambda _: self._switch_mode(MODE_UPLOAD))
         self.bind("<Control-Key-3>", lambda _: self._switch_mode(MODE_DRAW))
+        
+        self.bind("<Control-o>", lambda _: self._open_image())
+        self.bind("<Control-q>", lambda _: self.destroy())
 
     # Model loading
 
