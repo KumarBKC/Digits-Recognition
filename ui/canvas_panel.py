@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from typing import Callable, Optional
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageTk
 
 class CanvasPanel(tk.Frame):
     """Tkinter panel with a drawing canvas for mouse/touch digit input."""
@@ -38,6 +38,10 @@ class CanvasPanel(tk.Frame):
         # PIL image backing the canvas for pixel-accurate export
         self._pil_image = Image.new("L", (self.CANVAS_SIZE, self.CANVAS_SIZE), 255)
         self._pil_draw = ImageDraw.Draw(self._pil_image)
+        
+        self._undo_stack: list[Image.Image] = []
+        self._max_undo = 10
+        self._canvas_photo: Optional[ImageTk.PhotoImage] = None
 
         self._build_ui()
 
@@ -77,6 +81,17 @@ class CanvasPanel(tk.Frame):
 
         tk.Button(
             controls,
+            text="Undo",
+            command=self.undo_stroke,
+            bg="#F59E0B",
+            fg="#FFFFFF",
+            relief=tk.FLAT,
+            font=("Helvetica", 10, "bold"),
+            cursor="hand2",
+        ).pack(side=tk.RIGHT, padx=4)
+
+        tk.Button(
+            controls,
             text="Clear",
             command=self.clear,
             bg="#EF4444",
@@ -84,7 +99,7 @@ class CanvasPanel(tk.Frame):
             relief=tk.FLAT,
             font=("Helvetica", 10, "bold"),
             cursor="hand2",
-        ).pack(side=tk.RIGHT, padx=(4, 0))
+        ).pack(side=tk.RIGHT, padx=4)
 
         tk.Button(
             controls,
@@ -124,11 +139,35 @@ class CanvasPanel(tk.Frame):
         self._canvas.bind("<B1-Motion>", self._on_draw)
         self._canvas.bind("<ButtonRelease-1>", self._on_release)
         self._canvas.bind("<Button-1>", self._on_press)
+        self._canvas.bind("<Button-3>", self._on_press)  # right-click start
         self._canvas.bind("<B3-Motion>", self._on_erase)  # right-click = erase
+        
+        # Shortcut bindings
+        top = self.winfo_toplevel()
+        top.bind("<Control-z>", self._on_ctrl_z_event)
+        top.bind("<Control-s>", self._on_ctrl_s_event)
+        top.bind("<Delete>", self._on_delete_event)
+
+    def _on_ctrl_z_event(self, event) -> None:
+        if self.winfo_ismapped():
+            self.undo_stroke()
+
+    def _on_ctrl_s_event(self, event) -> None:
+        if self.winfo_ismapped():
+            self.save_image()
+
+    def _on_delete_event(self, event) -> None:
+        if self.winfo_ismapped():
+            self.clear()
 
     # Drawing event handlers
 
     def _on_press(self, event: tk.Event) -> None:
+        # Save state before drawing begins for undo feature
+        self._undo_stack.append(self._pil_image.copy())
+        if len(self._undo_stack) > self._max_undo:
+            self._undo_stack.pop(0)
+
         self._prev_x = event.x
         self._prev_y = event.y
 
@@ -163,6 +202,10 @@ class CanvasPanel(tk.Frame):
 
     def clear(self) -> None:
         """Clear the canvas and reset the PIL backing image."""
+        self._undo_stack.append(self._pil_image.copy())
+        if len(self._undo_stack) > self._max_undo:
+            self._undo_stack.pop(0)
+
         self._canvas.delete("all")
         self._pil_image = Image.new("L", (self.CANVAS_SIZE, self.CANVAS_SIZE), 255)
         self._pil_draw = ImageDraw.Draw(self._pil_image)
@@ -197,3 +240,22 @@ class CanvasPanel(tk.Frame):
                 messagebox.showinfo("Success", f"Image saved to:\n{file_path}")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save image:\n{e}")
+
+    def undo_stroke(self) -> None:
+        """Undo the last drawing stroke."""
+        if not self._undo_stack:
+            # We don't want continuous alerts, just ignore
+            return
+
+        # Restore previous PIL image
+        prev_img = self._undo_stack.pop()
+        self._pil_image = prev_img
+        self._pil_draw = ImageDraw.Draw(self._pil_image)
+
+        # Clear canvas and draw the un-mutated PIL image
+        self._canvas.delete("all")
+        self._canvas_photo = ImageTk.PhotoImage(self._pil_image)
+        self._canvas.create_image(0, 0, image=self._canvas_photo, anchor=tk.NW)
+
+        if self._auto_recognize.get():
+            self.predict_canvas()
