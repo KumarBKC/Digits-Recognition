@@ -118,6 +118,14 @@ class WebcamPanel(tk.Frame):
             font=("Helvetica", 9),
         ).pack()
 
+        # Shortcuts
+        top = self.winfo_toplevel()
+        top.bind("<space>", self._on_space_event)
+
+    def _on_space_event(self, event) -> None:
+        if self.winfo_ismapped():
+            self._toggle()
+
     # Stream control
 
     def _toggle(self) -> None:
