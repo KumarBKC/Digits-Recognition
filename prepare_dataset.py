@@ -4,7 +4,7 @@ import os
 import shutil
 import random
 
-RAW_DIR = "./data/raw"
+RAW_DIR = "./data/augmented"
 DATASET_DIR = "./data/dataset"
 TRAIN_RATIO = 0.8
 SEED = 42
