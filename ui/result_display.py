@@ -10,6 +10,7 @@ class ResultDisplay(tk.Frame):
     """Tkinter panel that displays prediction results with animated bars."""
 
     HISTORY_SIZE = 5
+    CONFIDENCE_THRESHOLD = 0.8  # Predictions below this are considered "noise"
 
     def __init__(self, parent: tk.Widget, **kwargs):
         super().__init__(parent, bg="#0D0D10", **kwargs)
@@ -169,10 +170,20 @@ class ResultDisplay(tk.Frame):
 
     def update(self, result) -> None:  # result: PredictionResult
         """Update the display with a new prediction result."""
-        self._digit_var.set(str(result.digit))
-        self._sequence_var.set("")  # clear sequence when updating single digit
+        # Threshold check for noise filtering
+        is_confident = result.confidence >= self.CONFIDENCE_THRESHOLD
+
+        if is_confident:
+            self._digit_var.set(str(result.digit))
+            self._sequence_var.set("")
+        else:
+            self._digit_var.set("?")
+            self._sequence_var.set("INVALID DIGIT (NOISE)")
+            self._time_var.set(f"Low confidence ({result.confidence * 100:.1f}%)")
+
         self._conf_var.set(f"Confidence: {result.confidence * 100:.1f}%")
-        self._time_var.set(f"Processing: {result.processing_time_ms:.1f} ms")
+        if is_confident:
+            self._time_var.set(f"Processing: {result.processing_time_ms:.1f} ms")
 
         # Confidence bar colour
         conf = result.confidence
