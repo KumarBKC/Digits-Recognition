@@ -9,7 +9,7 @@ import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox
-from typing import Optional
+from typing import List, Optional, Tuple
 
 # Ensure package root is on the path when running directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -277,11 +277,15 @@ class MainApp(tk.Tk):
         results = self._predictor.predict_batch(images)
         self._on_sequence_result(results)
 
-    def _on_sequence_result(self, results: list) -> None:
+    def _on_sequence_result(self, results: List[PredictionResult]) -> None:
         """Process a list of PredictionResults and display as sequence."""
         if not results:
             return
-        digits = "".join(str(r.digit) for r in results)
+        
+        # Build sequence string, using '?' for low-confidence digits
+        threshold = self._result_display.CONFIDENCE_THRESHOLD
+        digits = "".join(str(r.digit) if r.confidence >= threshold else "?" for r in results)
+        
         best = max(results, key=lambda r: r.confidence)
         self._on_prediction(best)
         self.after(0, lambda d=digits: self._result_display.update_sequence(d))
