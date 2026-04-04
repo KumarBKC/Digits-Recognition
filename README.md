@@ -1,103 +1,50 @@
-# Handwritten Digit Recognition System
+# Handwritten Digit Recognition
 
-A complete end-to-end Handwritten Digit Recognition System built with a custom CNN in PyTorch.
-Supports real-time webcam recognition, static image upload, and on-screen drawing from a single Tkinter desktop GUI.
+A PyTorch-based convolutional neural network (CNN) for handwritten digit recognition, featuring an interactive desktop UI for real-time inference.
 
-## Features
+# Features
 
-- Custom CNN: Lightweight DigitCNN trained on 17x43 grayscale images
-- 82% accuracy: Achieved on held-out validation set
-- Live webcam: Bounding-box detection and classification in real time
-- Image upload: JPG, PNG, BMP, TIFF support
-- Drawing canvas: Draw with mouse and auto-recognised
-- Desktop GUI: Tkinter application
-- Checkpoint export: Auto saves best_model.pth during training
+- Real-time inference via drawing canvas, webcam, and image upload.
+- Multi-digit sequence recognition.
+- Built-in confidence thresholding (>80%) to filter noise and invalid inputs.
+- Data processing pipeline for custom dataset augmentation and splitting.
 
-## Project Structure
+# Installation
 
-```
-digit_recognition/
-+-- data/
-¦   +-- dataset/
-¦   +-- augmented/
-¦   +-- mnist_supplement/
-+-- models/
-¦   +-- cnn_model.py
-¦   +-- checkpoints/
-¦       +-- best_model.pth
-+-- training/
-¦   +-- dataset_loader.py
-¦   +-- augmentation.py
-¦   +-- trainer.py
-¦   +-- metrics.py
-+-- inference/
-¦   +-- predictor.py
-¦   +-- webcam_stream.py
-¦   +-- preprocessor.py
-+-- ui/
-¦   +-- main_app.py
-¦   +-- canvas_panel.py
-¦   +-- webcam_panel.py
-¦   +-- upload_panel.py
-¦   +-- result_display.py
-+-- utils/
-¦   +-- visualizer.py
-¦   +-- logger.py
-+-- train.py
-+-- evaluate.py
-+-- requirements.txt
-```
+Requires Python 3.8 or higher.
 
-## Dataset Structure
-
-```
-data/dataset/
-+-- train/
-¦   +-- 0/
-¦   +-- 1/
-¦   +-- 9/
-+-- val/
-    +-- 0/
-    +-- 1/
-    +-- 9/
-```
-
-Format: Grayscale PNG, 17x43 pixels
-
-## CNN Architecture
-
-```
-Input: [B, 1, 43, 17]
-Block 1: Conv2d(1->32) -> BN -> ReLU -> MaxPool(2)
-Block 2: Conv2d(32->64) -> BN -> ReLU -> MaxPool(2)
-Block 3: Conv2d(64->128) -> BN -> ReLU -> MaxPool(2)
-Flatten: 1280
-FC1: Linear(1280->256) -> ReLU -> Dropout
-FC2: Linear(256->128) -> ReLU -> Dropout
-FC3: Linear(128->10)
-```
-
-## Setup
-
+Install the dependencies:
 ```bash
-pip install -r requirements.txt
-python -m training.dataset_loader --validate --data_root ./data/dataset
+pip install torch torchvision opencv-python Pillow numpy
 ```
 
-## Training
+# Usage
 
+Launch the desktop interface:
 ```bash
-python train.py --data_root ./data/dataset --epochs 60 --batch_size 32 --lr 0.001
+python -m ui.main_app
 ```
 
-## Evaluation
+*Global Shortcuts:*
+- `Ctrl+S` / `Return`: Run prediction
+- `Ctrl+Z`: Undo last stroke
+- `Ctrl+O`: Upload image
+- `Delete` / `Backspace`: Clear input
+- `Ctrl+Q`: Quit
 
-```bash
-python evaluate.py --checkpoint models/checkpoints/best_model.pth --data_root ./data/dataset
-```
+# Project Structure
 
-## Running the UI
+- `ui/`: Tkinter interface components.
+- `inference/`: PyTorch model loading and prediction logic.
+- `training/`: CNN architecture, metrics, and training loops.
+- `data/`: Target directories for `raw`, `augmented`, and `dataset` splits.
 
-```bash
-python ui/main_app.py --model models/checkpoints/best_model.pth
-```
+# Training
+
+To train the model on a custom dataset:
+1. Place source images in `data/raw/` or `data/augmented/`.
+2. Generate the train/validation splits:
+   ```bash
+   python prepare_dataset.py
+   ```
+3. Run the training module to compute metrics and save checkpoint weights.
