@@ -35,10 +35,37 @@ python -m ui.main_app
 
 # Project Structure
 
-- `ui/`: Tkinter interface components.
-- `inference/`: PyTorch model loading and prediction logic.
-- `training/`: CNN architecture, metrics, and training loops.
-- `data/`: Target directories for `raw`, `augmented`, and `dataset` splits.
+```text
+Digits_Recognition/
+├── data/                  (Ignored in Git)
+├── images/
+├── inference/
+│   ├── predictor.py
+│   ├── preprocessor.py
+│   └── webcam_stream.py
+├── models/
+│   └── cnn_model.py
+├── training/
+│   ├── augmentation.py
+│   ├── dataset_loader.py
+│   ├── metrics.py
+│   └── trainer.py
+├── ui/
+│   ├── canvas_panel.py
+│   ├── main_app.py
+│   ├── result_display.py
+│   ├── upload_panel.py
+│   └── webcam_panel.py
+├── utils/
+│   ├── logger.py
+│   └── visualizer.py
+├── augment_data.py
+├── evaluate.py
+├── prepare_dataset.py
+├── requirements.txt
+├── train.py
+└── README.md
+```
 
 # Training
 
