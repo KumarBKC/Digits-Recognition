@@ -8,6 +8,7 @@ A PyTorch-based convolutional neural network (CNN) for handwritten digit recogni
 - Multi-digit sequence recognition.
 - Built-in confidence thresholding (>80%) to filter noise and invalid inputs.
 - Data processing pipeline for custom dataset augmentation and splitting.
+- Dataset augmented from around 1,000 original samples to 52,000 variations by applying random tilts of ±25 degrees on its axis.
 
 # Installation
 
@@ -48,3 +49,13 @@ To train the model on a custom dataset:
    python prepare_dataset.py
    ```
 3. Run the training module to compute metrics and save checkpoint weights.
+
+# Evaluation Results
+
+### Training Curves
+![Training Curves](training_curves.png)
+*The training curves show that the model converges quickly, achieving over 99% training accuracy and near 100% validation accuracy, indicating excellent performance without overfitting.*
+
+### Confusion Matrix
+![Confusion Matrix](confusion_matrix.png)
+*The confusion matrix confirms this high accuracy, showing near-perfect classification across all handwritten digit classes with virtually no misclassifications.*
