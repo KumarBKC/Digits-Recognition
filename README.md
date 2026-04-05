@@ -37,7 +37,7 @@ python -m ui.main_app
 
 ```text
 Digits_Recognition/
-├── data/                  (Ignored in Git)
+├── data/
 ├── images/
 ├── inference/
 │   ├── predictor.py
@@ -83,10 +83,10 @@ To train the model on a custom dataset:
 
 ![Training Curves](images/training.png)
 
-*The training curves show that the model converges quickly, achieving over 99% training accuracy and near 100% validation accuracy, indicating excellent performance without overfitting.*
+*The model learns quickly and effectively, reaching over 99% training accuracy and nearly 100% validation accuracy without any signs of overfitting.*
 
 ### Confusion Matrix
 
 ![Confusion Matrix](images/confusion.png)
 
-*The confusion matrix confirms this high accuracy, showing near-perfect classification across all handwritten digit classes with virtually no misclassifications.*
+*As the matrix shows, the model does an excellent job distinguishing between the 10 digits, making almost no mistakes across the board.*
