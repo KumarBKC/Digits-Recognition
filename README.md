@@ -53,9 +53,13 @@ To train the model on a custom dataset:
 # Evaluation Results
 
 ### Training Curves
-![Training Curves](training_curves.png)
+
+![Training Curves](./training_curves.png)
+
 *The training curves show that the model converges quickly, achieving over 99% training accuracy and near 100% validation accuracy, indicating excellent performance without overfitting.*
 
 ### Confusion Matrix
-![Confusion Matrix](confusion_matrix.png)
+
+![Confusion Matrix](./confusion_matrix.png)
+
 *The confusion matrix confirms this high accuracy, showing near-perfect classification across all handwritten digit classes with virtually no misclassifications.*
