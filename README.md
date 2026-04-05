@@ -55,6 +55,7 @@ To train the model on a custom dataset:
 ### Training Curves
 
 ![Training Curves](./training_curves.png)
+![alt text](image.png)
 
 *The training curves show that the model converges quickly, achieving over 99% training accuracy and near 100% validation accuracy, indicating excellent performance without overfitting.*
 
