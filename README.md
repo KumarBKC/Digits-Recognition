@@ -60,6 +60,6 @@ To train the model on a custom dataset:
 
 ### Confusion Matrix
 
-![alt text](confusionMtx.png)
+![alt text](image-1.png)
 
 *The confusion matrix confirms this high accuracy, showing near-perfect classification across all handwritten digit classes with virtually no misclassifications.*
