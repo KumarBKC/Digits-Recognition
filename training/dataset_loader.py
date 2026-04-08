@@ -187,6 +187,6 @@ if __name__ == "__main__":
                 continue
             ds = DigitDataset(split_dir, split=split)
             dist = ds.get_class_distribution()
-            print(f"\n=== {split.upper()} split — {len(ds)} samples ===")
+            print(f"\n=== {split.upper()} split - {len(ds)} samples ===")
             for cls in sorted(dist):
                 print(f"  Digit {cls}: {dist[cls]:4d} samples")
