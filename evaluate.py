@@ -97,7 +97,7 @@ def main() -> None:
     report_path = os.path.join(args.output_dir, "classification_report.txt")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
-    print(f"\nClassification report saved → {report_path}")
+    print(f"\nClassification report saved -> {report_path}")
     print(report)
 
     # Print per-class accuracy table with common misclassification
