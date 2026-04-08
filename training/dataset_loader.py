@@ -97,7 +97,7 @@ class DigitDataset(Dataset):
                 ax.set_title(str(cls), fontsize=8)
                 ax.axis("off")
 
-        plt.suptitle(f"Sample images — {self.split} split")
+        plt.suptitle(f"Sample images - {self.split} split")
         plt.tight_layout()
         plt.savefig(f"samples_{self.split}.png", dpi=100)
         print(f"Saved samples_{self.split}.png")

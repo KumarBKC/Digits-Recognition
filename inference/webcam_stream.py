@@ -170,7 +170,7 @@ class WebcamStream:
                     color = (0, 165, 255)  # orange
                 else:
                     color = (0, 0, 255)   # red
-                label = f"{result.digit} — {conf * 100:.1f}%"
+                label = f"{result.digit} - {conf * 100:.1f}%"
 
             cv2.rectangle(annotated, (x, y), (x + w, y + h), color, 2)
 
