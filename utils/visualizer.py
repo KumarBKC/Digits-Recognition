@@ -53,7 +53,7 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
     plt.tight_layout()
     plt.savefig(save_path, dpi=120)
     plt.close(fig)
-    print(f"Saved training curves → {save_path}")
+    print(f"Saved training curves -> {save_path}")
 
 
 def plot_confusion_matrix(
@@ -107,7 +107,7 @@ def plot_confusion_matrix(
     plt.tight_layout()
     plt.savefig(save_path, dpi=120)
     plt.close(fig)
-    print(f"Saved confusion matrix → {save_path}")
+    print(f"Saved confusion matrix -> {save_path}")
 
 
 def plot_sample_predictions(
@@ -176,4 +176,4 @@ def plot_sample_predictions(
     plt.tight_layout()
     plt.savefig(save_path, dpi=120)
     plt.close(fig)
-    print(f"Saved sample predictions → {save_path}")
+    print(f"Saved sample predictions -> {save_path}")
