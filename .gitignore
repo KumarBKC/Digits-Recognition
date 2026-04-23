@@ -29,10 +29,6 @@ data/
 
 # Generated output files
 training.log
-training_curves.png
-confusion_matrix.png
-sample_predictions.png
-augmentation_preview.png
 evaluation_results/
 
 # IDE
