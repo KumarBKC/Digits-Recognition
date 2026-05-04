@@ -47,7 +47,7 @@ def augment_dataset(raw_dir: str, augmented_dir: str, rotations_count: int = 50)
 
                     for deg in degrees:
                         # Rotate image
-                        rotated = img.rotate(deg, resample=Image.BICUBIC, expand=False, fillcolor=fill_color)
+                        rotated = img.rotate(deg, resample=Image.Resampling.BICUBIC, expand=False, fillcolor=fill_color)
                         
                         # Save rotated version
                         save_name = f"{base_name}_rot{deg}.png"
