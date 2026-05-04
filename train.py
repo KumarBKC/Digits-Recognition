@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import os
+import random
+import sys
 
 # Allow running from the digit_recognition directory
 sys.path.insert(0, os.path.dirname(__file__))
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -35,6 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--weight_decay", type=float, default=1e-4)
     parser.add_argument("--patience", type=int, default=10)
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
     parser.add_argument(
         "--device",
         type=str,
@@ -52,7 +55,15 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    # 1. Device selection
+    # 1. Seed everything for reproducibility
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
+    logger.info("Random seed set to %d", args.seed)
+
+    # 2. Device selection
     if args.device == "auto":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     else:
@@ -60,7 +71,7 @@ def main() -> None:
     logger.info("Using device: %s", device)
     print(f"Device: {device}")
 
-    # 2. Create dataloaders + class weights
+    # 3. Create dataloaders + class weights
     logger.info("Loading dataset from '%s' ...", args.data_root)
     train_loader, val_loader, class_weights = create_dataloaders(
         data_root=args.data_root,
@@ -73,24 +84,24 @@ def main() -> None:
         len(val_loader),
     )
 
-    # 3. Instantiate model
+    # 4. Instantiate model
     model = DigitCNN(dropout_rate=0.4).to(device)
     print(f"Parameters: {model.count_parameters():,}")
 
-    # 4. Loss: weighted CrossEntropy (handles class imbalance)
+    # 5. Loss: weighted CrossEntropy (handles class imbalance)
     criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
 
-    # 5. Optimizer: AdamW
+    # 6. Optimizer: AdamW
     optimizer = optim.AdamW(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
     )
 
-    # 6. Scheduler: ReduceLROnPlateau
+    # 7. Scheduler: ReduceLROnPlateau
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=0.5, patience=5
     )
 
-    # 7. Train
+    # 8. Train
     trainer = Trainer(
         model=model,
         train_loader=train_loader,
@@ -104,7 +115,7 @@ def main() -> None:
     )
     history = trainer.fit(args.epochs)
 
-    # 8. Plot training curves + confusion matrix
+    # 9. Plot training curves + confusion matrix
     visualizer.plot_history(history)
     visualizer.plot_confusion_matrix(model, val_loader, device)
     logger.info("Training complete.")
