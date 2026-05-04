@@ -1,5 +1,9 @@
 """CNN architecture for handwritten digit recognition."""
 
+from __future__ import annotations
+
+from typing import List, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -49,8 +53,29 @@ class DigitCNN(nn.Module):
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.dropout2 = nn.Dropout(p=max(dropout_rate - 0.1, 0.1))
 
+        # Apply weight initialization
+        self._init_weights()
+
         # Print parameter count on init
         print(f"[DigitCNN] Trainable parameters: {self.count_parameters():,}")
+
+    # ------------------------------------------------------------------
+    # Weight initialization
+    # ------------------------------------------------------------------
+
+    def _init_weights(self) -> None:
+        """Apply Kaiming init to Conv layers, Xavier to Linear, constants to BN."""
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass returning raw logits."""
@@ -76,3 +101,35 @@ class DigitCNN(nn.Module):
     def count_parameters(self) -> int:
         """Return the number of trainable parameters."""
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
+    def summary(self) -> str:
+        """Return a Keras-style layer summary with parameter counts.
+
+        Returns:
+            Multi-line string table showing each layer's type, output shape
+            (estimated), and parameter count.
+        """
+        lines: List[str] = []
+        sep = "-" * 65
+        header = f"{'Layer':<30} {'Type':<20} {'Params':>12}"
+        lines.append(sep)
+        lines.append(header)
+        lines.append(sep)
+
+        total = 0
+        for name, param in self.named_parameters():
+            count = param.numel()
+            total += count
+            layer_type = "weight" if "weight" in name else "bias"
+            lines.append(f"{name:<30} {layer_type:<20} {count:>12,}")
+
+        lines.append(sep)
+        lines.append(f"{'Total trainable params':<30} {'':20} {total:>12,}")
+        lines.append(sep)
+        return "\n".join(lines)
+
+    def __repr__(self) -> str:
+        return (
+            f"DigitCNN(dropout_rate={self.dropout_rate}, "
+            f"params={self.count_parameters():,})"
+        )
