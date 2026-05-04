@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -61,7 +63,7 @@ def main() -> None:
 
     # Load model
     model = DigitCNN()
-    checkpoint = torch.load(args.checkpoint, map_location=device)
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=True)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.to(device)
     model.eval()
@@ -80,6 +82,7 @@ def main() -> None:
 
     # Evaluation loop
     tracker = MetricsTracker()
+    eval_start = time.perf_counter()
     with torch.no_grad():
         for images, labels in val_loader:
             images = images.to(device, non_blocking=True)
@@ -87,6 +90,8 @@ def main() -> None:
             logits = model(images)
             preds = logits.argmax(dim=1)
             tracker.update(preds, labels_dev)
+    eval_elapsed = time.perf_counter() - eval_start
+    print(f"Evaluation completed in {eval_elapsed:.2f}s")
 
     metrics = tracker.compute()
     report = metrics["classification_report"]
@@ -123,6 +128,26 @@ def main() -> None:
         print(f"{cls:>6}   | {total:>7} | {acc_pct:>7.1f}% | {err_str}")
 
     print(f"\nOverall accuracy: {metrics['accuracy'] * 100:.2f}%")
+
+    # Save per-class accuracy to CSV for programmatic use
+    csv_path = os.path.join(args.output_dir, "per_class_accuracy.csv")
+    with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["digit", "samples", "correct", "accuracy_pct", "top_misclassified_as", "misclass_pct"])
+        for cls in range(10):
+            row = cm[cls]
+            total = int(row.sum())
+            correct = int(row[cls])
+            acc_pct = round(per_class_acc[cls] * 100, 2)
+            errors = [(i, row[i]) for i in range(10) if i != cls and row[i] > 0]
+            errors.sort(key=lambda x: x[1], reverse=True)
+            if errors:
+                top_err_cls, top_err_cnt = errors[0]
+                misclass_pct = round(top_err_cnt / max(total, 1) * 100, 2)
+            else:
+                top_err_cls, misclass_pct = "", 0.0
+            writer.writerow([cls, total, correct, acc_pct, top_err_cls, misclass_pct])
+    print(f"Per-class accuracy CSV saved -> {csv_path}")
 
     # Confusion matrix plot
     cm_path = os.path.join(args.output_dir, "confusion_matrix.png")
