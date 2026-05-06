@@ -66,11 +66,17 @@ class DigitDataset(Dataset):
     def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
-        path, label = self.samples[idx]
-        img = Image.open(path).convert("L")
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, int]:
+        path, label = self.samples[index]
+        with open(path, "rb") as f:
+            img = Image.open(f).convert("L")
+        
         if self.transform is not None:
             img = self.transform(img)
+        else:
+            from torchvision import transforms
+            img = transforms.ToTensor()(img)
+            
         return img, label
 
     # Utility methods
