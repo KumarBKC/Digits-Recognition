@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import torch
@@ -15,40 +15,16 @@ from training.augmentation import train_transforms, val_transforms
 
 
 class DigitDataset(Dataset):
-    """Dataset for handwritten digit PNG images organised in class sub-folders.
 
-    Expected directory layout::
-
-        root_dir/
-            0/  (PNG files)
-            1/
-            ...
-            9/
-    """
-
-    def __init__(
-        self,
-        root_dir: str,
-        split: str = "train",
-        transform=None,
-    ):
-        """
-        Args:
-            root_dir: Path to dataset/train or dataset/val directory.
-            split: One of ``'train'``, ``'val'``, or ``'test'``.
-            transform: torchvision transforms pipeline.
-        """
+    def __init__(self, root_dir: str, split: str = "train", transform=None,):
         self.root_dir = root_dir
         self.split = split
         self.transform = transform
 
-        self.samples: List[Tuple[str, int]] = []  # [(path, label), ...]
+        self.samples: List[Tuple[str, int]] = []
         self._load_samples()
 
-    # Internal helpers
-
     def _load_samples(self) -> None:
-        """Scan root_dir sub-folders and populate self.samples."""
         for class_name in sorted(os.listdir(self.root_dir)):
             class_dir = os.path.join(self.root_dir, class_name)
             if not os.path.isdir(class_dir):
@@ -56,12 +32,10 @@ class DigitDataset(Dataset):
             try:
                 label = int(class_name)
             except ValueError:
-                continue  # skip non-numeric folders
+                continue
             for fname in os.listdir(class_dir):
                 if fname.lower().endswith((".png", ".jpg", ".jpeg", ".bmp")):
                     self.samples.append((os.path.join(class_dir, fname), label))
-
-    # Dataset interface
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -79,17 +53,13 @@ class DigitDataset(Dataset):
             
         return img, label
 
-    # Utility methods
-
     def get_class_distribution(self) -> Dict[int, int]:
-        """Return sample count per digit class."""
         dist: Dict[int, int] = {}
         for _, label in self.samples:
             dist[label] = dist.get(label, 0) + 1
         return dist
 
     def visualize_samples(self, n: int = 5) -> None:
-        """Plot n random samples for each class using matplotlib."""
         classes = sorted(set(label for _, label in self.samples))
         fig, axes = plt.subplots(len(classes), n, figsize=(n * 2, len(classes) * 2))
 
@@ -110,27 +80,8 @@ class DigitDataset(Dataset):
         plt.show()
 
 
-# Factory function
+def create_dataloaders(data_root: str, batch_size: int = 32, num_workers: int = 2,) -> Tuple[DataLoader, DataLoader, torch.Tensor]:
 
-
-def create_dataloaders(
-    data_root: str,
-    batch_size: int = 32,
-    num_workers: int = 2,
-) -> Tuple[DataLoader, DataLoader, torch.Tensor]:
-    """Create train and validation DataLoaders with class-weighted sampling.
-
-    Args:
-        data_root: Path to the dataset directory that contains ``train/`` and
-            ``val/`` sub-directories.
-        batch_size: Samples per mini-batch.
-        num_workers: Worker processes for data loading.
-
-    Returns:
-        ``(train_loader, val_loader, class_weights)`` where ``class_weights``
-        is a 1-D float tensor of length 10 suitable for
-        ``nn.CrossEntropyLoss(weight=...)``.
-    """
     train_dir = os.path.join(data_root, "train")
     val_dir = os.path.join(data_root, "val")
 
