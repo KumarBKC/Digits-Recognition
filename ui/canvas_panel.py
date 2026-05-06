@@ -212,7 +212,7 @@ class CanvasPanel(tk.Frame):
         self._canvas.delete("all")
         self._pil_image = Image.new("L", (self.CANVAS_SIZE, self.CANVAS_SIZE), 255)
         self._pil_draw = ImageDraw.Draw(self._pil_image)
-        if self._on_clear:
+        if self._on_clear is not None:
             self._on_clear()
 
     def get_canvas_image(self) -> Image.Image:
@@ -222,7 +222,7 @@ class CanvasPanel(tk.Frame):
     def predict_canvas(self) -> None:
         """Capture canvas content and invoke the prediction callback."""
         if self._pil_image.getextrema() == (255, 255):
-            if self._on_clear:
+            if self._on_clear is not None:
                 self._on_clear()
             return
 

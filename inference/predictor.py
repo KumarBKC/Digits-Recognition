@@ -142,7 +142,7 @@ class DigitPredictor:
         return results
 
     def predict_or_reject(
-        self, image, threshold: float | None = None,
+        self, image, threshold: Optional[float] = None,
     ) -> Optional[PredictionResult]:
         """Predict a digit, returning ``None`` if confidence is too low.
 
