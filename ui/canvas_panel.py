@@ -232,7 +232,7 @@ class CanvasPanel(tk.Frame):
         from ui.upload_panel import UploadPanel
         rois = UploadPanel._segment_digits(img)
 
-        if len(rois) > 1 and getattr(self, "_on_sequence", None) is not None:
+        if len(rois) > 1 and self._on_sequence is not None:
             self._on_sequence(rois)
         elif self._on_predict is not None:
             self._on_predict(img)
