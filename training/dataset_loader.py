@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Dict, List, Tuple
+import warnings
+from typing import Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import torch
@@ -79,6 +80,54 @@ class DigitDataset(Dataset):
         print(f"Saved samples_{self.split}.png")
         plt.show()
 
+    def validate_integrity(self, verbose: bool = True) -> Dict[str, int]:
+        """Check every sample file for readability and report issues.
+
+        Scans each image in the dataset to verify it can be opened
+        without errors.  Corrupt or unreadable files are reported
+        but **not** removed from the sample list automatically.
+
+        Args:
+            verbose: If True, print progress and per-file errors.
+
+        Returns:
+            Dictionary with ``total``, ``valid``, and ``corrupt`` counts.
+        """
+        valid = 0
+        corrupt = 0
+        for path, label in self.samples:
+            try:
+                with open(path, "rb") as f:
+                    img = Image.open(f)
+                    img.verify()  # checks file integrity without full decode
+                valid += 1
+            except Exception as exc:
+                corrupt += 1
+                if verbose:
+                    warnings.warn(f"Corrupt image [{label}]: {path} — {exc}")
+        stats = {"total": len(self.samples), "valid": valid, "corrupt": corrupt}
+        if verbose:
+            print(
+                f"[{self.split}] Integrity check: {valid}/{len(self.samples)} valid, "
+                f"{corrupt} corrupt"
+            )
+        return stats
+
+    def get_sample_by_class(self, digit: int, n: int = 1) -> List[Tuple[str, int]]:
+        """Return up to *n* random samples for a specific digit class.
+
+        Args:
+            digit: Target digit (0-9).
+            n: Maximum number of samples to return.
+
+        Returns:
+            List of ``(file_path, label)`` tuples.
+        """
+        cls_samples = [(p, l) for p, l in self.samples if l == digit]
+        if not cls_samples:
+            return []
+        return random.sample(cls_samples, min(n, len(cls_samples)))
+
 
 def create_dataloaders(data_root: str, batch_size: int = 32, num_workers: int = 2,) -> Tuple[DataLoader, DataLoader, torch.Tensor]:
 
@@ -124,6 +173,34 @@ def create_dataloaders(data_root: str, batch_size: int = 32, num_workers: int = 
     )
 
     return train_loader, val_loader, class_weights
+
+
+def print_dataset_summary(
+    train_dataset: DigitDataset,
+    val_dataset: DigitDataset,
+    class_weights: torch.Tensor,
+) -> None:
+    """Print a formatted summary of dataset splits and class weights.
+
+    Args:
+        train_dataset: Training split dataset.
+        val_dataset: Validation split dataset.
+        class_weights: Per-class weight tensor.
+    """
+    train_dist = train_dataset.get_class_distribution()
+    val_dist = val_dataset.get_class_distribution()
+    sep = "-" * 50
+    print(f"\n{sep}")
+    print(f"{'Digit':>6} | {'Train':>7} | {'Val':>7} | {'Weight':>8}")
+    print(sep)
+    for cls in range(10):
+        t_count = train_dist.get(cls, 0)
+        v_count = val_dist.get(cls, 0)
+        w = float(class_weights[cls])
+        print(f"{cls:>6} | {t_count:>7} | {v_count:>7} | {w:>8.4f}")
+    print(sep)
+    print(f"{'Total':>6} | {len(train_dataset):>7} | {len(val_dataset):>7} |")
+    print(f"{sep}\n")
 
 
 # CLI entry point for validation
