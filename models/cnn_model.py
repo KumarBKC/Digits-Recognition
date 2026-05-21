@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -98,9 +99,71 @@ class DigitCNN(nn.Module):
         logits = self.forward(x)
         return torch.softmax(logits, dim=1)
 
-    def count_parameters(self) -> int:
-        """Return the number of trainable parameters."""
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+    def count_parameters(self, only_trainable: bool = True) -> int:
+        """Return the number of model parameters.
+
+        Args:
+            only_trainable: If True, count only parameters with
+                ``requires_grad=True``.  Set to False to include frozen
+                parameters as well.
+        """
+        if only_trainable:
+            return sum(p.numel() for p in self.parameters() if p.requires_grad)
+        return sum(p.numel() for p in self.parameters())
+
+    # ------------------------------------------------------------------
+    # Transfer-learning helpers
+    # ------------------------------------------------------------------
+
+    def freeze_backbone(self) -> None:
+        """Freeze all convolutional blocks so only the FC head is trained.
+
+        Useful for fine-tuning on a small custom digit dataset where you
+        want to keep the learned feature extractor intact.
+        """
+        for block in (self.block1, self.block2, self.block3):
+            for param in block.parameters():
+                param.requires_grad = False
+        frozen = self.count_parameters(only_trainable=False) - self.count_parameters()
+        print(f"[DigitCNN] Backbone frozen — {frozen:,} params locked")
+
+    def unfreeze_backbone(self) -> None:
+        """Unfreeze all convolutional blocks for full end-to-end training."""
+        for block in (self.block1, self.block2, self.block3):
+            for param in block.parameters():
+                param.requires_grad = True
+        print(f"[DigitCNN] Backbone unfrozen — {self.count_parameters():,} trainable params")
+
+    # ------------------------------------------------------------------
+    # Layer introspection
+    # ------------------------------------------------------------------
+
+    def get_layer_info(self) -> List[Dict[str, object]]:
+        """Return structured information about each named module.
+
+        Returns:
+            List of dicts with keys ``name``, ``type``, ``params``,
+            ``trainable``, and ``shape`` (weight shape if applicable).
+        """
+        info: List[Dict[str, object]] = []
+        for name, module in self.named_modules():
+            if name == "":  # skip root
+                continue
+            params = sum(p.numel() for p in module.parameters(recurse=False))
+            trainable = sum(
+                p.numel() for p in module.parameters(recurse=False) if p.requires_grad
+            )
+            weight_shape: Tuple[int, ...] | None = None
+            if hasattr(module, "weight") and module.weight is not None:
+                weight_shape = tuple(module.weight.shape)
+            info.append({
+                "name": name,
+                "type": module.__class__.__name__,
+                "params": params,
+                "trainable": trainable,
+                "shape": weight_shape,
+            })
+        return info
 
     def summary(self) -> str:
         """Return a Keras-style layer summary with parameter counts.
