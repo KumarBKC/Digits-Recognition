@@ -45,6 +45,8 @@ class CanvasPanel(tk.Frame):
         self._undo_stack: list[Image.Image] = []
         self._max_undo = 10
         self._canvas_photo: Optional[ImageTk.PhotoImage] = None
+        self._stroke_count: int = 0
+        self._show_grid = tk.BooleanVar(value=False)
 
         self._build_ui()
 
@@ -81,6 +83,18 @@ class CanvasPanel(tk.Frame):
             activebackground="#0D0D10",
             font=("Helvetica", 10),
         ).pack(side=tk.LEFT)
+
+        tk.Checkbutton(
+            controls,
+            text="Grid",
+            variable=self._show_grid,
+            command=self._toggle_grid,
+            bg="#0D0D10",
+            fg="#F3F4F6",
+            selectcolor="#26262B",
+            activebackground="#0D0D10",
+            font=("Helvetica", 10),
+        ).pack(side=tk.LEFT, padx=(4, 0))
 
         tk.Button(
             controls,
@@ -151,6 +165,28 @@ class CanvasPanel(tk.Frame):
         top.bind("<Control-s>", self._on_ctrl_s_event)
         top.bind("<Delete>", self._on_delete_event)
 
+        # Status bar: stroke count and coordinate display
+        status_bar = tk.Frame(self, bg="#0D0D10")
+        status_bar.pack(fill=tk.X, padx=8, pady=(0, 4))
+
+        self._stroke_label = tk.Label(
+            status_bar,
+            text="Strokes: 0",
+            bg="#0D0D10",
+            fg="#9CA3AF",
+            font=("Helvetica", 9),
+        )
+        self._stroke_label.pack(side=tk.LEFT)
+
+        self._coord_label = tk.Label(
+            status_bar,
+            text="x: —  y: —",
+            bg="#0D0D10",
+            fg="#9CA3AF",
+            font=("Helvetica", 9),
+        )
+        self._coord_label.pack(side=tk.RIGHT)
+
     def _on_ctrl_z_event(self, event) -> None:
         if self.winfo_ismapped():
             self.undo_stroke()
@@ -173,6 +209,8 @@ class CanvasPanel(tk.Frame):
 
         self._prev_x = event.x
         self._prev_y = event.y
+        self._stroke_count += 1
+        self._stroke_label.config(text=f"Strokes: {self._stroke_count}")
 
     def _on_draw(self, event: tk.Event) -> None:
         """Draw a thick oval stroke following the mouse."""
@@ -187,6 +225,7 @@ class CanvasPanel(tk.Frame):
 
         self._prev_x = x
         self._prev_y = y
+        self._coord_label.config(text=f"x: {x}  y: {y}")
 
     def _on_erase(self, event: tk.Event) -> None:
         """Erase (draw white) on right-click drag."""
@@ -212,6 +251,11 @@ class CanvasPanel(tk.Frame):
         self._canvas.delete("all")
         self._pil_image = Image.new("L", (self.CANVAS_SIZE, self.CANVAS_SIZE), 255)
         self._pil_draw = ImageDraw.Draw(self._pil_image)
+        self._stroke_count = 0
+        self._stroke_label.config(text="Strokes: 0")
+        self._coord_label.config(text="x: —  y: —")
+        if self._show_grid.get():
+            self._draw_grid()
         if self._on_clear is not None:
             self._on_clear()
 
@@ -269,3 +313,29 @@ class CanvasPanel(tk.Frame):
 
         if self._auto_recognize.get():
             self.predict_canvas()
+
+    # Grid overlay helpers
+
+    def _toggle_grid(self) -> None:
+        """Show or hide the alignment grid on the canvas."""
+        if self._show_grid.get():
+            self._draw_grid()
+        else:
+            self._canvas.delete("grid_line")
+
+    def _draw_grid(self) -> None:
+        """Draw a light alignment grid on the canvas."""
+        self._canvas.delete("grid_line")
+        step = self.CANVAS_SIZE // 4
+        color = "#D1D5DB"
+        for i in range(1, 4):
+            # Vertical lines
+            x = i * step
+            self._canvas.create_line(
+                x, 0, x, self.CANVAS_SIZE, fill=color, dash=(2, 4), tags="grid_line"
+            )
+            # Horizontal lines
+            y = i * step
+            self._canvas.create_line(
+                0, y, self.CANVAS_SIZE, y, fill=color, dash=(2, 4), tags="grid_line"
+            )
