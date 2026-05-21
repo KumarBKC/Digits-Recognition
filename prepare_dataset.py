@@ -13,15 +13,6 @@ def prepare_dataset(
     train_ratio: float = 0.8,
     seed: int = 42,
 ) -> None:
-    """Split source images into train/val directories.
-
-    Args:
-        raw_dir: Path to augmented (or raw) images with class sub-folders.
-        dataset_dir: Output root — ``train/`` and ``val/`` sub-folders are
-                     created inside this directory.
-        train_ratio: Fraction of images allocated to the training set.
-        seed: Random seed for reproducible splits.
-    """
     if not os.path.isdir(raw_dir):
         print(f"Error: source directory '{raw_dir}' does not exist.")
         return
