@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Dict, List
 
 import torch
@@ -39,6 +40,7 @@ class Trainer:
         self.device = device
         self.checkpoint_dir = checkpoint_dir
         self.patience = patience
+        self.max_grad_norm = 5.0
 
         os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -64,6 +66,12 @@ class Trainer:
             logits = self.model(images)
             loss = self.criterion(logits, labels)
             loss.backward()
+
+            # Gradient clipping to prevent exploding gradients
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), max_norm=self.max_grad_norm
+            )
+
             self.optimizer.step()
 
             running_loss += loss.item() * images.size(0)
@@ -128,11 +136,16 @@ class Trainer:
         checkpoint_path = os.path.join(self.checkpoint_dir, "best_model.pth")
 
         for epoch in range(1, num_epochs + 1):
+            epoch_start = time.perf_counter()
             train_loss, train_acc = self.train_one_epoch(epoch)
             val_loss, val_acc = self.validate()
+            epoch_elapsed = time.perf_counter() - epoch_start
 
             # LR scheduling
             self.scheduler.step(val_loss)
+
+            # Log current learning rate
+            current_lr = self.optimizer.param_groups[0]["lr"]
 
             history["train_loss"].append(train_loss)
             history["val_loss"].append(val_loss)
@@ -141,17 +154,20 @@ class Trainer:
 
             logger.info(
                 "Epoch %03d | train_loss=%.4f  train_acc=%.4f | "
-                "val_loss=%.4f  val_acc=%.4f",
+                "val_loss=%.4f  val_acc=%.4f | lr=%.2e | %.1fs",
                 epoch,
                 train_loss,
                 train_acc,
                 val_loss,
                 val_acc,
+                current_lr,
+                epoch_elapsed,
             )
             print(
                 f"Epoch {epoch:3d} | "
                 f"train_loss={train_loss:.4f}  train_acc={train_acc:.4f} | "
-                f"val_loss={val_loss:.4f}  val_acc={val_acc:.4f}"
+                f"val_loss={val_loss:.4f}  val_acc={val_acc:.4f} | "
+                f"lr={current_lr:.2e} | {epoch_elapsed:.1f}s"
             )
 
             # Checkpoint on improvement
@@ -182,6 +198,24 @@ class Trainer:
                         "without improvement."
                     )
                     break
+
+        # Training summary
+        total_epochs = len(history["train_loss"])
+        best_epoch = int(max(range(total_epochs), key=lambda i: history["val_acc"][i])) + 1
+        logger.info(
+            "Training complete — %d epochs, best val_acc=%.4f at epoch %d",
+            total_epochs, best_val_acc, best_epoch,
+        )
+        print(f"\n{'='*55}")
+        print(f"  Training Summary")
+        print(f"{'='*55}")
+        print(f"  Total epochs trained:  {total_epochs}")
+        print(f"  Best epoch:            {best_epoch}")
+        print(f"  Best val accuracy:     {best_val_acc:.4f}")
+        print(f"  Final train loss:      {history['train_loss'][-1]:.4f}")
+        print(f"  Final val loss:        {history['val_loss'][-1]:.4f}")
+        print(f"  Final learning rate:   {self.optimizer.param_groups[0]['lr']:.2e}")
+        print(f"{'='*55}\n")
 
         return history
 
