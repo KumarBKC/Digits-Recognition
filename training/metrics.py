@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+import time
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 
 
 class MetricsTracker:
@@ -15,6 +22,9 @@ class MetricsTracker:
     def __init__(self):
         self._all_preds: List[int] = []
         self._all_labels: List[int] = []
+        self._epoch_start: Optional[float] = None
+        self._epoch_elapsed: float = 0.0
+        self._batch_count: int = 0
 
     # Accumulation
 
@@ -27,11 +37,15 @@ class MetricsTracker:
         """
         self._all_preds.extend(preds_tensor.cpu().tolist())
         self._all_labels.extend(labels_tensor.cpu().tolist())
+        self._batch_count += 1
 
     def reset(self) -> None:
         """Clear accumulated state between epochs."""
         self._all_preds = []
         self._all_labels = []
+        self._batch_count = 0
+        self._epoch_start = time.perf_counter()
+        self._epoch_elapsed = 0.0
 
     # Computation
 
@@ -47,6 +61,10 @@ class MetricsTracker:
               * ``top1_errors`` – list of ``(true, pred, confidence)``
                 tuples (confidence is –1 when unavailable)
         """
+        # Finalise epoch timing
+        if self._epoch_start is not None:
+            self._epoch_elapsed = time.perf_counter() - self._epoch_start
+
         preds = np.array(self._all_preds)
         labels = np.array(self._all_labels)
 
@@ -59,6 +77,17 @@ class MetricsTracker:
             row_sum = cm[cls].sum()
             acc = float(cm[cls, cls] / row_sum) if row_sum > 0 else 0.0
             per_class_acc.append(acc)
+
+        # Macro-averaged precision, recall, F1
+        macro_precision = float(precision_score(
+            labels, preds, labels=list(range(10)), average="macro", zero_division=0,
+        ))
+        macro_recall = float(recall_score(
+            labels, preds, labels=list(range(10)), average="macro", zero_division=0,
+        ))
+        macro_f1 = float(f1_score(
+            labels, preds, labels=list(range(10)), average="macro", zero_division=0,
+        ))
 
         report = classification_report(
             labels,
@@ -78,7 +107,28 @@ class MetricsTracker:
         return {
             "accuracy": overall_acc,
             "per_class_accuracy": per_class_acc,
+            "precision": macro_precision,
+            "recall": macro_recall,
+            "f1_score": macro_f1,
             "confusion_matrix": cm,
             "classification_report": report,
             "top1_errors": top1_errors,
+            "total_samples": len(labels),
+            "total_errors": len(top1_errors),
+            "batches_processed": self._batch_count,
+            "elapsed_seconds": round(self._epoch_elapsed, 3),
         }
+
+    def summary(self) -> str:
+        """Return a concise human-readable summary of the last compute()."""
+        m = self.compute()
+        lines = [
+            f"Accuracy:  {m['accuracy'] * 100:.2f}%",
+            f"Precision: {m['precision'] * 100:.2f}%",
+            f"Recall:    {m['recall'] * 100:.2f}%",
+            f"F1 Score:  {m['f1_score'] * 100:.2f}%",
+            f"Samples:   {m['total_samples']:,}  ({m['total_errors']} errors)",
+            f"Batches:   {m['batches_processed']}",
+            f"Time:      {m['elapsed_seconds']:.3f}s",
+        ]
+        return "\n".join(lines)
