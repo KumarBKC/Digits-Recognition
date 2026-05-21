@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import os
 import time
+from collections import deque
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import torch
 
@@ -68,10 +69,38 @@ class DigitPredictor:
 
         self._checkpoint_epoch = checkpoint.get("epoch", None)
         self._checkpoint_acc = checkpoint.get("val_acc", None)
+        self._checkpoint_loss = checkpoint.get("val_loss", None)
 
         self.preprocessor = ImagePreprocessor(device=str(self.device))
 
+        # Prediction history ring buffer for diagnostics
+        self._history: Deque[Dict[str, Any]] = deque(maxlen=100)
+        self._total_predictions: int = 0
+        self._warmed_up: bool = False
+
     # Public API
+
+    def warm_up(self, n_runs: int = 3) -> float:
+        """Run dummy inference to warm up the model and CUDA kernels.
+
+        Eliminates the latency spike on the first real prediction
+        caused by lazy kernel compilation and memory allocation.
+
+        Args:
+            n_runs: Number of warm-up forward passes.
+
+        Returns:
+            Average warm-up inference time in milliseconds.
+        """
+        dummy = torch.randn(1, 1, 43, 17, device=self.device)
+        times: List[float] = []
+        with torch.no_grad():
+            for _ in range(n_runs):
+                t0 = time.perf_counter()
+                self.model(dummy)
+                times.append((time.perf_counter() - t0) * 1000.0)
+        self._warmed_up = True
+        return sum(times) / len(times)
 
     def preprocess(self, image) -> torch.Tensor:
         """Preprocess any supported input to a model-ready tensor."""
@@ -166,6 +195,33 @@ class DigitPredictor:
     def is_confident(result: PredictionResult, threshold: float = 0.65) -> bool:
         """Return True if the prediction confidence exceeds the threshold."""
         return result.confidence >= threshold
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Return metadata about the loaded model and checkpoint.
+
+        Returns:
+            Dictionary with device, checkpoint path, epoch, accuracy,
+            loss, parameter count, warm-up status, and prediction stats.
+        """
+        avg_time = 0.0
+        if self._history:
+            avg_time = sum(h["time_ms"] for h in self._history) / len(self._history)
+        return {
+            "device": str(self.device),
+            "model_path": self.model_path,
+            "checkpoint_epoch": self._checkpoint_epoch,
+            "checkpoint_val_acc": self._checkpoint_acc,
+            "checkpoint_val_loss": self._checkpoint_loss,
+            "total_parameters": self.model.count_parameters(),
+            "warmed_up": self._warmed_up,
+            "total_predictions": self._total_predictions,
+            "avg_inference_ms": round(avg_time, 2),
+        }
+
+    @property
+    def prediction_history(self) -> List[Dict[str, Any]]:
+        """Return a copy of the recent prediction history."""
+        return list(self._history)
 
     def __repr__(self) -> str:
         epoch_str = f", epoch={self._checkpoint_epoch}" if self._checkpoint_epoch else ""
