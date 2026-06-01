@@ -16,7 +16,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from models.cnn_model import DigitCNN
-from training.dataset_loader import create_dataloaders
+from training.dataset_loader import create_dataloaders, print_dataset_summary
 from training.trainer import Trainer
 from utils import visualizer
 from utils.logger import get_logger
@@ -61,6 +61,8 @@ def main() -> None:
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     logger.info("Random seed set to %d", args.seed)
 
     # 2. Device selection
@@ -78,6 +80,7 @@ def main() -> None:
         batch_size=args.batch_size,
         num_workers=2,
     )
+    print_dataset_summary(train_loader.dataset, val_loader.dataset, class_weights)
     logger.info(
         "Dataset: %d train batches, %d val batches",
         len(train_loader),
