@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import os
 import sys
 import time
@@ -128,6 +129,31 @@ def main() -> None:
         print(f"{cls:>6}   | {total:>7} | {acc_pct:>7.1f}% | {err_str}")
 
     print(f"\nOverall accuracy: {metrics['accuracy'] * 100:.2f}%")
+    logger.info(
+        "Evaluation: accuracy=%.4f, precision=%.4f, recall=%.4f, f1=%.4f",
+        metrics["accuracy"],
+        metrics["precision"],
+        metrics["recall"],
+        metrics["f1_score"],
+    )
+
+    summary_path = os.path.join(args.output_dir, "metrics_summary.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "checkpoint": args.checkpoint,
+                "accuracy": metrics["accuracy"],
+                "precision": metrics["precision"],
+                "recall": metrics["recall"],
+                "f1_score": metrics["f1_score"],
+                "total_samples": metrics["total_samples"],
+                "total_errors": metrics["total_errors"],
+                "eval_seconds": round(eval_elapsed, 3),
+            },
+            f,
+            indent=2,
+        )
+    print(f"Metrics summary saved -> {summary_path}")
 
     # Save per-class accuracy to CSV for programmatic use
     csv_path = os.path.join(args.output_dir, "per_class_accuracy.csv")
