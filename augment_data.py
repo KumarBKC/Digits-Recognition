@@ -10,7 +10,6 @@ from PIL import Image, ImageEnhance
 from tqdm import tqdm
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".tiff")
-MAX_ROTATION_DEGREES = 25
 
 
 def augment_dataset(
