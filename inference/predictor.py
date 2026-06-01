@@ -127,12 +127,21 @@ class DigitPredictor:
         confidence = float(probs_list[digit])
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
-        return PredictionResult(
+        result = PredictionResult(
             digit=digit,
             confidence=confidence,
             all_probs=probs_list,
             processing_time_ms=elapsed_ms,
         )
+        self._total_predictions += 1
+        self._history.append(
+            {
+                "digit": digit,
+                "confidence": confidence,
+                "time_ms": elapsed_ms,
+            }
+        )
+        return result
 
     def predict_batch(self, images: list) -> List[PredictionResult]:
         """Run inference on a list of images efficiently.
