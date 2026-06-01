@@ -9,6 +9,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+NUM_CLASSES = 10
+INPUT_HEIGHT = 43
+INPUT_WIDTH = 17
+
 
 class DigitCNN(nn.Module):
     """Lightweight CNN for 17×43 grayscale digit images.
@@ -49,7 +53,7 @@ class DigitCNN(nn.Module):
         # Flatten: 128 × 5 × 2 = 1280
         self.fc1 = nn.Linear(1280, 256)
         self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 10)
+        self.fc3 = nn.Linear(128, NUM_CLASSES)
 
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.dropout2 = nn.Dropout(p=max(dropout_rate - 0.1, 0.1))
