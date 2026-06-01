@@ -10,6 +10,18 @@ from typing import Generator, Optional
 # Rotating log configuration
 _MAX_LOG_BYTES = 5 * 1024 * 1024  # 5 MB per log file
 _BACKUP_COUNT = 3                  # keep 3 rotated backups
+_LOG_LEVEL_NAMES = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+}
+
+
+def _resolve_log_level() -> int:
+    """Read console log level from DIGIT_LOG_LEVEL env var (default INFO)."""
+    env_level = os.environ.get("DIGIT_LOG_LEVEL", "INFO").upper()
+    return _LOG_LEVEL_NAMES.get(env_level, logging.INFO)
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -30,14 +42,18 @@ def get_logger(name: str) -> logging.Logger:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
+        console_level = _resolve_log_level()
+
         # Console handler
         stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(logging.INFO)
+        stream_handler.setLevel(console_level)
         stream_handler.setFormatter(fmt)
         root_logger.addHandler(stream_handler)
 
         # Rotating file handler (writes to training.log, max 5 MB × 3 backups)
-        log_path = os.path.join(os.getcwd(), "training.log")
+        log_dir = os.environ.get("DIGIT_LOG_DIR", os.getcwd())
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, "training.log")
         try:
             file_handler = RotatingFileHandler(
                 log_path,
