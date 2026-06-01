@@ -133,4 +133,9 @@ class ImagePreprocessor:
         cropped = gray[y0:y1, x0:x1]
         if cropped.size == 0:
             return gray
+
+        # Avoid degenerate crops that break resize quality
+        min_h, min_w = 8, 4
+        if cropped.shape[0] < min_h or cropped.shape[1] < min_w:
+            return gray
         return cropped
