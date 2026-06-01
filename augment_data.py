@@ -9,6 +9,10 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from tqdm import tqdm
 
+IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".tiff")
+MAX_ROTATION_DEGREES = 25
+
+
 def augment_dataset(
     raw_dir: str,
     augmented_dir: str,
@@ -29,6 +33,13 @@ def augment_dataset(
                           rotated image.
         seed: Optional random seed for reproducible brightness jitter.
     """
+    if rotations_count < 1:
+        print("Error: rotations_count must be at least 1.")
+        return
+    if not 0.0 <= brightness_jitter <= 1.0:
+        print("Error: brightness_jitter must be between 0.0 and 1.0.")
+        return
+
     if not os.path.exists(raw_dir):
         print(f"Error: Raw directory '{raw_dir}' not found.")
         return
@@ -45,6 +56,9 @@ def augment_dataset(
 
     # Process each class (0-9)
     classes = [d for d in os.listdir(raw_dir) if os.path.isdir(os.path.join(raw_dir, d))]
+    if not classes:
+        print(f"Error: No class sub-folders found in '{raw_dir}'.")
+        return
 
     total_images_processed = 0
     total_augmented_saved = 0
@@ -61,8 +75,11 @@ def augment_dataset(
 
         images = [
             f for f in os.listdir(src_class_path)
-            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff'))
+            if f.lower().endswith(IMAGE_EXTENSIONS)
         ]
+        if not images:
+            print(f"  Skipping class {class_name}: no images found.")
+            continue
 
         for img_name in tqdm(images, desc=f"Class {class_name}"):
             img_path = os.path.join(src_class_path, img_name)
