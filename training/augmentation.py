@@ -17,7 +17,8 @@ class AddGaussianNoise:
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         if random.random() < self.p:
             noise = torch.randn_like(tensor) * self.std + self.mean
-            return tensor + noise
+            augmented = tensor + noise
+            return augmented.clamp(-1.0, 1.0)
         return tensor
 
     def __repr__(self) -> str:
