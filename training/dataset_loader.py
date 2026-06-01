@@ -134,8 +134,20 @@ def create_dataloaders(data_root: str, batch_size: int = 32, num_workers: int = 
     train_dir = os.path.join(data_root, "train")
     val_dir = os.path.join(data_root, "val")
 
+    for split_name, split_dir in (("train", train_dir), ("val", val_dir)):
+        if not os.path.isdir(split_dir):
+            raise FileNotFoundError(
+                f"Missing {split_name} directory: '{split_dir}'. "
+                f"Run prepare_dataset.py to create the dataset under '{data_root}'."
+            )
+
     train_dataset = DigitDataset(train_dir, split="train", transform=train_transforms)
     val_dataset = DigitDataset(val_dir, split="val", transform=val_transforms)
+
+    if len(train_dataset) == 0:
+        raise ValueError(f"No training samples found in '{train_dir}'.")
+    if len(val_dataset) == 0:
+        raise ValueError(f"No validation samples found in '{val_dir}'.")
 
     # --- Compute class weights (inverse frequency) ---
     dist = train_dataset.get_class_distribution()
