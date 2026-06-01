@@ -104,8 +104,11 @@ class MetricsTracker:
             if labels[i] != preds[i]
         ]
 
+        error_rate = 1.0 - overall_acc if len(labels) > 0 else 0.0
+
         return {
             "accuracy": overall_acc,
+            "error_rate": error_rate,
             "per_class_accuracy": per_class_acc,
             "precision": macro_precision,
             "recall": macro_recall,
@@ -124,6 +127,7 @@ class MetricsTracker:
         m = self.compute()
         lines = [
             f"Accuracy:  {m['accuracy'] * 100:.2f}%",
+            f"Error rate: {m['error_rate'] * 100:.2f}%",
             f"Precision: {m['precision'] * 100:.2f}%",
             f"Recall:    {m['recall'] * 100:.2f}%",
             f"F1 Score:  {m['f1_score'] * 100:.2f}%",
