@@ -23,7 +23,9 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
     epochs = range(1, len(history["train_loss"]) + 1)
 
     # Epoch of best validation accuracy
-    best_epoch = int(np.argmax(history["val_acc"])) + 1
+    best_idx = int(np.argmax(history["val_acc"]))
+    best_epoch = best_idx + 1
+    best_val_acc_pct = history["val_acc"][best_idx] * 100
 
     fig, (ax_loss, ax_acc) = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -49,7 +51,10 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
     ax_acc.legend()
     ax_acc.grid(True, alpha=0.3)
 
-    plt.suptitle("Training History", fontsize=14)
+    plt.suptitle(
+        f"Training History — best val acc {best_val_acc_pct:.1f}% @ epoch {best_epoch}",
+        fontsize=14,
+    )
     plt.tight_layout()
     plt.savefig(save_path, dpi=120)
     plt.close(fig)
