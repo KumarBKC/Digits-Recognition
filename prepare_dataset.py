@@ -6,6 +6,8 @@ import random
 import argparse
 import time
 
+SUPPORTED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".tiff")
+
 
 def prepare_dataset(
     raw_dir: str = "./data/augmented",
@@ -16,10 +18,11 @@ def prepare_dataset(
     if not os.path.isdir(raw_dir):
         print(f"Error: source directory '{raw_dir}' does not exist.")
         return
+    if not 0.0 < train_ratio < 1.0:
+        print(f"Error: train_ratio must be between 0 and 1 (got {train_ratio}).")
+        return
 
     random.seed(seed)
-
-    supported_ext = (".png", ".jpg", ".jpeg", ".bmp", ".tiff")
     total_train = 0
     total_val = 0
     start_time = time.perf_counter()
@@ -36,11 +39,15 @@ def prepare_dataset(
 
         images = [
             f for f in os.listdir(class_path)
-            if f.lower().endswith(supported_ext)
+            if f.lower().endswith(SUPPORTED_EXTENSIONS)
         ]
+        if len(images) < 2:
+            print(f"  Warning: class {class_name} has {len(images)} image(s); skipping.")
+            continue
         random.shuffle(images)
 
-        split = int(len(images) * train_ratio)
+        split = max(1, int(len(images) * train_ratio))
+        split = min(split, len(images) - 1)
         train_imgs = images[:split]
         val_imgs = images[split:]
 
