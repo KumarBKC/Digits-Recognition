@@ -134,6 +134,7 @@ class Trainer:
         best_val_acc = 0.0
         epochs_without_improvement = 0
         checkpoint_path = os.path.join(self.checkpoint_dir, "best_model.pth")
+        last_checkpoint_path = os.path.join(self.checkpoint_dir, "last_model.pth")
 
         for epoch in range(1, num_epochs + 1):
             epoch_start = time.perf_counter()
@@ -168,6 +169,18 @@ class Trainer:
                 f"train_loss={train_loss:.4f}  train_acc={train_acc:.4f} | "
                 f"val_loss={val_loss:.4f}  val_acc={val_acc:.4f} | "
                 f"lr={current_lr:.2e} | {epoch_elapsed:.1f}s"
+            )
+
+            # Always persist the latest epoch for resume / inspection
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": self.model.state_dict(),
+                    "optimizer_state_dict": self.optimizer.state_dict(),
+                    "val_acc": val_acc,
+                    "val_loss": val_loss,
+                },
+                last_checkpoint_path,
             )
 
             # Checkpoint on improvement
