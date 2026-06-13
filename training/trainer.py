@@ -1,4 +1,10 @@
-"""Training loop, validation, early stopping, and checkpointing."""
+"""Training loop, validation, early stopping, and checkpointing.
+
+Supports:
+  - Mixup data augmentation for improved generalization
+  - Per-batch LR scheduling (OneCycleLR) or per-epoch (ReduceLROnPlateau)
+  - Gradient clipping to prevent exploding gradients
+"""
 
 from __future__ import annotations
 
@@ -6,6 +12,7 @@ import os
 import time
 from typing import Dict, List
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -30,6 +37,8 @@ class Trainer:
         device: torch.device,
         checkpoint_dir: str,
         patience: int = 10,
+        mixup_alpha: float = 0.0,
+        step_scheduler_per_batch: bool = False,
     ):
         self.model = model
         self.train_loader = train_loader
@@ -41,13 +50,36 @@ class Trainer:
         self.checkpoint_dir = checkpoint_dir
         self.patience = patience
         self.max_grad_norm = 5.0
+        self.mixup_alpha = mixup_alpha
+        self.step_scheduler_per_batch = step_scheduler_per_batch
 
         os.makedirs(checkpoint_dir, exist_ok=True)
 
+    # ------------------------------------------------------------------
+    # Mixup helpers
+    # ------------------------------------------------------------------
+
+    def _mixup_data(
+        self, x: torch.Tensor, y: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
+        """Apply Mixup: interpolate between random pairs of examples.
+
+        Returns:
+            ``(mixed_x, y_a, y_b, lam)`` where ``lam`` is the mixing
+            coefficient sampled from Beta(alpha, alpha).
+        """
+        lam = np.random.beta(self.mixup_alpha, self.mixup_alpha)
+        batch_size = x.size(0)
+        index = torch.randperm(batch_size, device=x.device)
+        mixed_x = lam * x + (1 - lam) * x[index]
+        return mixed_x, y, y[index], lam
+
+    # ------------------------------------------------------------------
     # Single-epoch training
+    # ------------------------------------------------------------------
 
     def train_one_epoch(self, epoch_num: int) -> tuple[float, float]:
-        """Run one training epoch.
+        """Run one training epoch with optional Mixup augmentation.
 
         Returns:
             ``(mean_loss, accuracy)`` for the epoch.
@@ -63,8 +95,20 @@ class Trainer:
             labels = labels.to(self.device, non_blocking=True)
 
             self.optimizer.zero_grad()
-            logits = self.model(images)
-            loss = self.criterion(logits, labels)
+
+            # Mixup augmentation (blends pairs of training examples)
+            if self.mixup_alpha > 0:
+                mixed_images, targets_a, targets_b, lam = self._mixup_data(
+                    images, labels
+                )
+                logits = self.model(mixed_images)
+                loss = lam * self.criterion(logits, targets_a) + (
+                    1 - lam
+                ) * self.criterion(logits, targets_b)
+            else:
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
+
             loss.backward()
 
             # Gradient clipping to prevent exploding gradients
@@ -73,6 +117,10 @@ class Trainer:
             )
 
             self.optimizer.step()
+
+            # Step scheduler per batch (for OneCycleLR / CosineAnnealingWarmRestarts)
+            if self.step_scheduler_per_batch:
+                self.scheduler.step()
 
             running_loss += loss.item() * images.size(0)
             preds = logits.argmax(dim=1)
@@ -85,7 +133,9 @@ class Trainer:
         epoch_acc = correct / max(total, 1)
         return epoch_loss, epoch_acc
 
+    # ------------------------------------------------------------------
     # Validation
+    # ------------------------------------------------------------------
 
     def validate(self) -> tuple[float, float]:
         """Run a full validation pass.
@@ -115,7 +165,9 @@ class Trainer:
         val_acc = correct / max(total, 1)
         return val_loss, val_acc
 
+    # ------------------------------------------------------------------
     # Full training loop
+    # ------------------------------------------------------------------
 
     def fit(self, num_epochs: int) -> Dict[str, List[float]]:
         """Train for *num_epochs* epochs with early stopping.
@@ -142,8 +194,9 @@ class Trainer:
             val_loss, val_acc = self.validate()
             epoch_elapsed = time.perf_counter() - epoch_start
 
-            # LR scheduling
-            self.scheduler.step(val_loss)
+            # LR scheduling (per-epoch schedulers like ReduceLROnPlateau)
+            if not self.step_scheduler_per_batch:
+                self.scheduler.step(val_loss)
 
             # Log current learning rate
             current_lr = self.optimizer.param_groups[0]["lr"]
@@ -232,7 +285,9 @@ class Trainer:
 
         return history
 
+    # ------------------------------------------------------------------
     # Checkpoint loading
+    # ------------------------------------------------------------------
 
     def load_checkpoint(self, path: str) -> dict:
         """Restore model and optimizer state from a checkpoint file."""
