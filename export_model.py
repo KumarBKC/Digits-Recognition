@@ -86,11 +86,6 @@ def export_torchscript(model: DigitCNN, output_path: str) -> None:
 
 
 def benchmark_inference(model: nn.Module, n_runs: int = 200) -> float:
-    """Benchmark inference latency on CPU.
-
-    Returns:
-        Average latency in milliseconds per image.
-    """
     dummy = torch.randn(1, 1, INPUT_HEIGHT, INPUT_WIDTH)
 
     # Warmup
