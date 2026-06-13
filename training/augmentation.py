@@ -1,8 +1,17 @@
-"""Augmentation transforms for training the digit recognition model."""
+"""Augmentation transforms for training the digit recognition model.
+
+Includes:
+  - Geometric: rotation, affine, perspective, elastic deformation
+  - Morphological: random erosion/dilation (pen thickness variation)
+  - Pixel-level: color jitter, Gaussian blur, brightness inversion, noise
+  - Regularization: Random Erasing (Cutout)
+"""
 
 import random
 
+import numpy as np
 import torch
+from PIL import Image
 from torchvision import transforms
 
 
@@ -42,6 +51,35 @@ class InvertBrightness:
         return f"{self.__class__.__name__}(p={self.p})"
 
 
+class RandomMorphology:
+    """Randomly erode or dilate to simulate pen thickness variation.
+
+    Works on PIL Images. Place before ToTensor() in the pipeline.
+    Erosion thins strokes; dilation thickens them — this is critical
+    for robustness to different writing instruments and pressures.
+    """
+
+    def __init__(self, kernel_size: int = 2, p: float = 0.3):
+        self.kernel_size = kernel_size
+        self.p = p
+
+    def __call__(self, img):
+        if random.random() > self.p:
+            return img
+        import cv2
+
+        arr = np.array(img)
+        kernel = np.ones((self.kernel_size, self.kernel_size), np.uint8)
+        if random.random() < 0.5:
+            arr = cv2.erode(arr, kernel, iterations=1)
+        else:
+            arr = cv2.dilate(arr, kernel, iterations=1)
+        return Image.fromarray(arr)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(kernel_size={self.kernel_size}, p={self.p})"
+
+
 # Training transforms — applied only to the train split
 train_transforms = transforms.Compose(
     [
@@ -60,6 +98,10 @@ train_transforms = transforms.Compose(
             p=0.3,
             fill=255,
         ),
+        # Elastic deformation — simulates natural handwriting variation
+        transforms.ElasticTransform(alpha=8.0, sigma=3.0),
+        # Morphological augmentation — simulates pen thickness variation
+        RandomMorphology(kernel_size=2, p=0.3),
         # Pixel-level augmentations
         transforms.ColorJitter(brightness=0.3, contrast=0.3),
         transforms.RandomApply(
@@ -71,6 +113,8 @@ train_transforms = transforms.Compose(
         transforms.Normalize(mean=[0.5], std=[0.5]),  # → [-1, 1]
         # Noise augmentation (applied post-tensor)
         AddGaussianNoise(mean=0.0, std=0.05, p=0.4),
+        # Random erasing — forces recognition from partial information
+        transforms.RandomErasing(p=0.3, scale=(0.02, 0.15), ratio=(0.3, 3.0)),
     ]
 )
 
