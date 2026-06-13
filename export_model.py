@@ -61,6 +61,7 @@ def export_onnx(model: DigitCNN, output_path: str) -> None:
     dummy_input = torch.randn(1, 1, INPUT_HEIGHT, INPUT_WIDTH)
     torch.onnx.export(
         model,
+        # pyrefly: ignore [bad-argument-type]
         dummy_input,
         output_path,
         input_names=["image"],
