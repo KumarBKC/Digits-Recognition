@@ -49,6 +49,18 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="models/checkpoints",
     )
+    parser.add_argument(
+        "--mixup_alpha",
+        type=float,
+        default=0.2,
+        help="Mixup interpolation strength. 0 = disabled. (default: 0.2)",
+    )
+    parser.add_argument(
+        "--label_smoothing",
+        type=float,
+        default=0.1,
+        help="Label smoothing factor for CrossEntropyLoss. (default: 0.1)",
+    )
     return parser.parse_args()
 
 
@@ -91,17 +103,25 @@ def main() -> None:
     model = DigitCNN(dropout_rate=0.4).to(device)
     print(f"Parameters: {model.count_parameters():,}")
 
-    # 5. Loss: weighted CrossEntropy (handles class imbalance)
-    criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
+    # 5. Loss: weighted CrossEntropy with label smoothing
+    criterion = nn.CrossEntropyLoss(
+        weight=class_weights.to(device),
+        label_smoothing=args.label_smoothing,
+    )
 
     # 6. Optimizer: AdamW
     optimizer = optim.AdamW(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
     )
 
-    # 7. Scheduler: ReduceLROnPlateau
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=5
+    # 7. Scheduler: OneCycleLR (step per batch for smooth cosine annealing)
+    scheduler = optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=args.lr * 3,   # peak LR = 3× base
+        epochs=args.epochs,
+        steps_per_epoch=len(train_loader),
+        pct_start=0.3,        # 30% warmup
+        anneal_strategy="cos",
     )
 
     # 8. Train
@@ -115,6 +135,8 @@ def main() -> None:
         device=device,
         checkpoint_dir=args.checkpoint_dir,
         patience=args.patience,
+        mixup_alpha=args.mixup_alpha,
+        step_scheduler_per_batch=True,
     )
     history = trainer.fit(args.epochs)
 
