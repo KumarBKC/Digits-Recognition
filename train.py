@@ -10,13 +10,15 @@ import sys
 # Allow running from the digit_recognition directory
 sys.path.insert(0, os.path.dirname(__file__))
 
+from typing import cast
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
 from models.cnn_model import DigitCNN
-from training.dataset_loader import create_dataloaders, print_dataset_summary
+from training.dataset_loader import DigitDataset, create_dataloaders, print_dataset_summary
 from training.trainer import Trainer
 from utils import visualizer
 from utils.logger import get_logger
@@ -92,7 +94,11 @@ def main() -> None:
         batch_size=args.batch_size,
         num_workers=2,
     )
-    print_dataset_summary(train_loader.dataset, val_loader.dataset, class_weights)
+    print_dataset_summary(
+        cast(DigitDataset, train_loader.dataset), 
+        cast(DigitDataset, val_loader.dataset), 
+        class_weights
+    )
     logger.info(
         "Dataset: %d train batches, %d val batches",
         len(train_loader),
