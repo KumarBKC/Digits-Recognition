@@ -268,4 +268,3 @@ class DigitCNN(nn.Module):
             f"DigitCNN(dropout_rate={self.dropout_rate}, "
             f"params={self.count_parameters():,})"
         )
-# Updated file
