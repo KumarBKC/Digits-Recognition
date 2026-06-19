@@ -18,6 +18,7 @@ def augment_dataset(
     rotations_count: int = 50,
     brightness_jitter: float = 0.0,
     seed: int | None = None,
+    output_format: str = "png",
 ):
     """
     Rotate each image in raw_dir and save to augmented_dir.
@@ -105,7 +106,7 @@ def augment_dataset(
                             rotated = ImageEnhance.Brightness(rotated).enhance(factor)
 
                         # Save augmented version
-                        save_name = f"{base_name}_rot{deg}.png"
+                        save_name = f"{base_name}_rot{deg}.{output_format.lstrip('.')}"
                         rotated.save(os.path.join(dst_class_path, save_name))
                         total_augmented_saved += 1
 
@@ -133,6 +134,7 @@ if __name__ == "__main__":
         help="Random brightness jitter fraction, e.g. 0.15 for ±15%%. (default: 0 = disabled)",
     )
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducible jitter.")
+    parser.add_argument("--format", type=str, default="png", help="Output image format (png, jpeg, etc.).")
 
     args = parser.parse_args()
     augment_dataset(
@@ -141,4 +143,5 @@ if __name__ == "__main__":
         args.count,
         brightness_jitter=args.brightness_jitter,
         seed=args.seed,
+        output_format=args.format,
     )
