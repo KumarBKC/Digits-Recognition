@@ -263,6 +263,14 @@ class DigitCNN(nn.Module):
         lines.append(sep)
         return "\n".join(lines)
 
+    @property
+    def device(self) -> torch.device:
+        """Get the device the model parameters are currently on."""
+        try:
+            return next(self.parameters()).device
+        except StopIteration:
+            return torch.device("cpu")
+
     def __repr__(self) -> str:
         return (
             f"DigitCNN(dropout_rate={self.dropout_rate}, "
