@@ -181,6 +181,7 @@ class Trainer:
             "val_loss": [],
             "train_acc": [],
             "val_acc": [],
+            "lr": [],
         }
 
         best_val_acc = 0.0
@@ -205,6 +206,7 @@ class Trainer:
             history["val_loss"].append(val_loss)
             history["train_acc"].append(train_acc)
             history["val_acc"].append(val_acc)
+            history["lr"].append(current_lr)
 
             logger.info(
                 "Epoch %03d | train_loss=%.4f  train_acc=%.4f | "
