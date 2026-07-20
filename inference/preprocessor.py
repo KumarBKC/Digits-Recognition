@@ -14,9 +14,8 @@ class ImagePreprocessor:
     that training distribution matches inference distribution.
     """
 
-    def __init__(self, device: str = "cpu", debug: bool = False):
+    def __init__(self, device: str = "cpu"):
         self.device = torch.device(device)
-        self.debug = debug
 
     # Public API
 
@@ -52,14 +51,6 @@ class ImagePreprocessor:
         arr = np.expand_dims(arr, axis=0)  # [1, 43, 17]
         tensor = torch.from_numpy(arr).unsqueeze(0)  # [1, 1, 43, 17]
         tensor = tensor.to(self.device)
-
-        # Step 7 — Sanity checks (debug mode)
-        if self.debug:
-            assert tensor.shape == (1, 1, 43, 17), f"Bad shape: {tensor.shape}"
-            assert tensor.dtype == torch.float32, f"Bad dtype: {tensor.dtype}"
-            assert tensor.min() >= -1.1 and tensor.max() <= 1.1, (
-                f"Values out of range: [{tensor.min():.2f}, {tensor.max():.2f}]"
-            )
 
         return tensor
 
