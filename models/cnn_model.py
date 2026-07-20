@@ -8,7 +8,7 @@ Optimized with:
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+
 
 import torch
 import torch.nn as nn
@@ -129,9 +129,6 @@ class DigitCNN(nn.Module):
         # Apply weight initialization
         self._init_weights()
 
-        # Print parameter count on init
-        print(f"[DigitCNN] Trainable parameters: {self.count_parameters():,}")
-
     # ------------------------------------------------------------------
     # Weight initialization
     # ------------------------------------------------------------------
@@ -183,86 +180,6 @@ class DigitCNN(nn.Module):
             return sum(p.numel() for p in self.parameters() if p.requires_grad)
         return sum(p.numel() for p in self.parameters())
 
-    # ------------------------------------------------------------------
-    # Transfer-learning helpers
-    # ------------------------------------------------------------------
-
-    def freeze_backbone(self) -> None:
-        """Freeze all convolutional blocks so only the classifier head is trained.
-
-        Useful for fine-tuning on a small custom digit dataset where you
-        want to keep the learned feature extractor intact.
-        """
-        for block in (self.block1, self.res1, self.block2, self.res2, self.block3):
-            for param in block.parameters():
-                param.requires_grad = False
-        frozen = self.count_parameters(only_trainable=False) - self.count_parameters()
-        print(f"[DigitCNN] Backbone frozen — {frozen:,} params locked")
-
-    def unfreeze_backbone(self) -> None:
-        """Unfreeze all convolutional blocks for full end-to-end training."""
-        for block in (self.block1, self.res1, self.block2, self.res2, self.block3):
-            for param in block.parameters():
-                param.requires_grad = True
-        print(f"[DigitCNN] Backbone unfrozen — {self.count_parameters():,} trainable params")
-
-    # ------------------------------------------------------------------
-    # Layer introspection
-    # ------------------------------------------------------------------
-
-    def get_layer_info(self) -> List[Dict[str, object]]:
-        """Return structured information about each named module.
-
-        Returns:
-            List of dicts with keys ``name``, ``type``, ``params``,
-            ``trainable``, and ``shape`` (weight shape if applicable).
-        """
-        info: List[Dict[str, object]] = []
-        for name, module in self.named_modules():
-            if name == "":  # skip root
-                continue
-            params = sum(p.numel() for p in module.parameters(recurse=False))
-            trainable = sum(
-                p.numel() for p in module.parameters(recurse=False) if p.requires_grad
-            )
-            weight_shape: Tuple[int, ...] | None = None
-            if hasattr(module, "weight") and module.weight is not None:
-                weight_shape = tuple(module.weight.shape)
-            info.append({
-                "name": name,
-                "type": module.__class__.__name__,
-                "params": params,
-                "trainable": trainable,
-                "shape": weight_shape,
-            })
-        return info
-
-    def summary(self) -> str:
-        """Return a Keras-style layer summary with parameter counts.
-
-        Returns:
-            Multi-line string table showing each layer's type, output shape
-            (estimated), and parameter count.
-        """
-        lines: List[str] = []
-        sep = "-" * 65
-        header = f"{'Layer':<30} {'Type':<20} {'Params':>12}"
-        lines.append(sep)
-        lines.append(header)
-        lines.append(sep)
-
-        total = 0
-        for name, param in self.named_parameters():
-            count = param.numel()
-            total += count
-            layer_type = "weight" if "weight" in name else "bias"
-            lines.append(f"{name:<30} {layer_type:<20} {count:>12,}")
-
-        lines.append(sep)
-        lines.append(f"{'Total trainable params':<30} {'':20} {total:>12,}")
-        lines.append(sep)
-        return "\n".join(lines)
-
     @property
     def device(self) -> torch.device:
         """Get the device the model parameters are currently on."""
@@ -271,8 +188,3 @@ class DigitCNN(nn.Module):
         except StopIteration:
             return torch.device("cpu")
 
-    def __repr__(self) -> str:
-        return (
-            f"DigitCNN(dropout_rate={self.dropout_rate}, "
-            f"params={self.count_parameters():,})"
-        )
