@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import time
-from typing import Dict, List, Optional, Tuple
+
+from typing import Dict, List, Tuple
+
 
 import numpy as np
 import torch
@@ -22,9 +23,6 @@ class MetricsTracker:
     def __init__(self):
         self._all_preds: List[int] = []
         self._all_labels: List[int] = []
-        self._epoch_start: Optional[float] = None
-        self._epoch_elapsed: float = 0.0
-        self._batch_count: int = 0
 
     # Accumulation
 
@@ -37,15 +35,11 @@ class MetricsTracker:
         """
         self._all_preds.extend(preds_tensor.cpu().tolist())
         self._all_labels.extend(labels_tensor.cpu().tolist())
-        self._batch_count += 1
 
     def reset(self) -> None:
         """Clear accumulated state between epochs."""
         self._all_preds = []
         self._all_labels = []
-        self._batch_count = 0
-        self._epoch_start = time.perf_counter()
-        self._epoch_elapsed = 0.0
 
     # Computation
 
@@ -61,10 +55,6 @@ class MetricsTracker:
               * ``top1_errors`` – list of ``(true, pred, confidence)``
                 tuples (confidence is –1 when unavailable)
         """
-        # Finalise epoch timing
-        if self._epoch_start is not None:
-            self._epoch_elapsed = time.perf_counter() - self._epoch_start
-
         preds = np.array(self._all_preds)
         labels = np.array(self._all_labels)
 
@@ -118,8 +108,6 @@ class MetricsTracker:
             "top1_errors": top1_errors,
             "total_samples": len(labels),
             "total_errors": len(top1_errors),
-            "batches_processed": self._batch_count,
-            "elapsed_seconds": round(self._epoch_elapsed, 3),
         }
 
     def summary(self) -> str:
