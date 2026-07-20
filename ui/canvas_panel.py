@@ -165,7 +165,7 @@ class CanvasPanel(tk.Frame):
         top.bind("<Control-s>", self._on_ctrl_s_event)
         top.bind("<Delete>", self._on_delete_event)
 
-        # Status bar: stroke count and coordinate display
+        # Status bar: stroke count
         status_bar = tk.Frame(self, bg="#0D0D10")
         status_bar.pack(fill=tk.X, padx=8, pady=(0, 4))
 
@@ -177,15 +177,6 @@ class CanvasPanel(tk.Frame):
             font=("Helvetica", 9),
         )
         self._stroke_label.pack(side=tk.LEFT)
-
-        self._coord_label = tk.Label(
-            status_bar,
-            text="x: —  y: —",
-            bg="#0D0D10",
-            fg="#9CA3AF",
-            font=("Helvetica", 9),
-        )
-        self._coord_label.pack(side=tk.RIGHT)
 
     def _on_ctrl_z_event(self, event) -> None:
         if self.winfo_ismapped():
@@ -225,7 +216,6 @@ class CanvasPanel(tk.Frame):
 
         self._prev_x = x
         self._prev_y = y
-        self._coord_label.config(text=f"x: {x}  y: {y}")
 
     def _on_erase(self, event: tk.Event) -> None:
         """Erase (draw white) on right-click drag."""
@@ -253,7 +243,6 @@ class CanvasPanel(tk.Frame):
         self._pil_draw = ImageDraw.Draw(self._pil_image)
         self._stroke_count = 0
         self._stroke_label.config(text="Strokes: 0")
-        self._coord_label.config(text="x: —  y: —")
         if self._show_grid.get():
             self._draw_grid()
         if self._on_clear is not None:
