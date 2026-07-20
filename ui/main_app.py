@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 import threading
@@ -20,29 +19,7 @@ from ui.result_display import ResultDisplay
 from ui.upload_panel import UploadPanel
 from ui.webcam_panel import WebcamPanel
 
-_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".digit_recognition_config.json")
 
-MODE_WEBCAM = "WEBCAM"
-MODE_UPLOAD = "UPLOAD"
-MODE_DRAW = "DRAW"
-
-
-def _load_config() -> dict:
-    if os.path.exists(_CONFIG_FILE):
-        try:
-            with open(_CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {"last_mode": MODE_DRAW}
-
-
-def _save_config(cfg: dict) -> None:
-    try:
-        with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(cfg, f)
-    except Exception:
-        pass
 
 
 class MainApp(tk.Tk):
@@ -59,8 +36,7 @@ class MainApp(tk.Tk):
 
         self._model_path = model_path
         self._predictor: Optional[DigitPredictor] = None
-        self._config = _load_config()
-        self._current_mode: str = self._config.get("last_mode", MODE_DRAW)
+        self._current_mode: str = MODE_DRAW
 
         self._build_menu_bar()
         self._build_header()
@@ -188,9 +164,6 @@ class MainApp(tk.Tk):
             self._webcam_panel._stop()
 
         self._current_mode = mode
-        if save:
-            self._config["last_mode"] = mode
-            _save_config(self._config)
 
         # Update button highlights
         for m, btn in self._mode_buttons.items():
