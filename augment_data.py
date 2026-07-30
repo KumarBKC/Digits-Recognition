@@ -5,7 +5,6 @@ import time
 import random
 import argparse
 
-import numpy as np
 from PIL import Image, ImageEnhance
 from tqdm import tqdm
 
@@ -48,7 +47,6 @@ def augment_dataset(
 
     if seed is not None:
         random.seed(seed)
-        np.random.seed(seed)
 
     # Calculate degree range
     half_rot = rotations_count // 2
@@ -106,7 +104,7 @@ def augment_dataset(
                             rotated = ImageEnhance.Brightness(rotated).enhance(factor)
 
                         # Save augmented version
-                        save_name = f"{base_name}_rot{deg}.{output_format.lstrip('.')}"
+                        save_name = f"{base_name}_rot{deg}.{output_format.lstrip('.') }"
                         rotated.save(os.path.join(dst_class_path, save_name))
                         total_augmented_saved += 1
 
