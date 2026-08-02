@@ -161,8 +161,16 @@ class Trainer:
 
 
 
-    def fit(self, num_epochs: int) -> Dict[str, List[float]]:
+    def fit(
+        self, num_epochs: int, resume_from: str | None = None
+    ) -> Dict[str, List[float]]:
         """Train for *num_epochs* epochs with early stopping.
+
+        Args:
+            num_epochs: Maximum number of epochs to train.
+            resume_from: Optional path to a checkpoint file to resume
+                training from.  Restores model weights, optimizer state,
+                and continues from the saved epoch.
 
         Returns:
             ``history`` dict with keys ``train_loss``, ``val_loss``,
@@ -177,11 +185,26 @@ class Trainer:
         }
 
         best_val_acc = 0.0
+        start_epoch = 1
         epochs_without_improvement = 0
         checkpoint_path = os.path.join(self.checkpoint_dir, "best_model.pth")
         last_checkpoint_path = os.path.join(self.checkpoint_dir, "last_model.pth")
 
-        for epoch in range(1, num_epochs + 1):
+        # Resume from checkpoint if requested
+        if resume_from is not None:
+            ckpt = self.load_checkpoint(resume_from)
+            start_epoch = ckpt.get("epoch", 0) + 1
+            best_val_acc = ckpt.get("val_acc", 0.0)
+            logger.info(
+                "Resuming training from epoch %d (best_val_acc=%.4f)",
+                start_epoch, best_val_acc,
+            )
+            print(
+                f"  ↻ Resuming from epoch {start_epoch} "
+                f"(best_val_acc={best_val_acc:.4f})"
+            )
+
+        for epoch in range(start_epoch, num_epochs + 1):
             epoch_start = time.perf_counter()
             train_loss, train_acc = self.train_one_epoch(epoch)
             val_loss, val_acc = self.validate()
@@ -261,19 +284,25 @@ class Trainer:
 
         # Training summary
         total_epochs = len(history["train_loss"])
-        best_epoch = int(max(range(total_epochs), key=lambda i: history["val_acc"][i])) + 1
+        if total_epochs > 0:
+            best_epoch = int(max(range(total_epochs), key=lambda i: history["val_acc"][i])) + start_epoch
+        else:
+            best_epoch = start_epoch
         logger.info(
-            "Training complete — %d epochs, best val_acc=%.4f at epoch %d",
-            total_epochs, best_val_acc, best_epoch,
+            "Training complete — %d epochs (started at %d), best val_acc=%.4f at epoch %d",
+            total_epochs, start_epoch, best_val_acc, best_epoch,
         )
+        resumed_str = f" (resumed from epoch {start_epoch})" if start_epoch > 1 else ""
         print(f"\n{'='*55}")
-        print(f"  Training Summary")
+        print(f"  Training Summary{resumed_str}")
         print(f"{'='*55}")
         print(f"  Total epochs trained:  {total_epochs}")
+        print(f"  Epoch range:           {start_epoch} → {start_epoch + total_epochs - 1}")
         print(f"  Best epoch:            {best_epoch}")
         print(f"  Best val accuracy:     {best_val_acc:.4f}")
-        print(f"  Final train loss:      {history['train_loss'][-1]:.4f}")
-        print(f"  Final val loss:        {history['val_loss'][-1]:.4f}")
+        if total_epochs > 0:
+            print(f"  Final train loss:      {history['train_loss'][-1]:.4f}")
+            print(f"  Final val loss:        {history['val_loss'][-1]:.4f}")
         print(f"  Final learning rate:   {self.optimizer.param_groups[0]['lr']:.2e}")
         print(f"{'='*55}\n")
 
