@@ -120,7 +120,5 @@ class MetricsTracker:
             f"Recall:    {m['recall'] * 100:.2f}%",
             f"F1 Score:  {m['f1_score'] * 100:.2f}%",
             f"Samples:   {m['total_samples']:,}  ({m['total_errors']} errors)",
-            f"Batches:   {m['batches_processed']}",
-            f"Time:      {m['elapsed_seconds']:.3f}s",
         ]
         return "\n".join(lines)
