@@ -11,6 +11,10 @@ import time
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from sklearn.metrics import confusion_matrix
 
@@ -178,6 +182,65 @@ def main() -> None:
     # Confusion matrix plot
     cm_path = os.path.join(args.output_dir, "confusion_matrix.png")
     visualizer.plot_confusion_matrix(model, val_loader, device, save_path=cm_path)
+
+    # Per-class accuracy bar chart
+    bar_path = os.path.join(args.output_dir, "per_class_accuracy.png")
+    _plot_per_class_bar(per_class_acc, metrics["accuracy"], bar_path)
+
+
+def _plot_per_class_bar(
+    per_class_acc: list[float],
+    overall_acc: float,
+    save_path: str,
+) -> None:
+    """Generate a horizontal bar chart of per-class accuracy.
+
+    Bars are color-coded:
+      - Green  (≥ 95%) — strong performance
+      - Orange (≥ 85%) — acceptable but improvable
+      - Red    (< 85%) — needs attention
+    """
+    digits = list(range(10))
+    acc_pcts = [a * 100 for a in per_class_acc]
+
+    # Color-code by threshold
+    colors = []
+    for a in acc_pcts:
+        if a >= 95:
+            colors.append("#2ecc71")   # green
+        elif a >= 85:
+            colors.append("#f39c12")   # orange
+        else:
+            colors.append("#e74c3c")   # red
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    bars = ax.barh(digits, acc_pcts, color=colors, edgecolor="white", height=0.7)
+
+    # Annotate each bar with its value
+    for bar, pct in zip(bars, acc_pcts):
+        ax.text(
+            bar.get_width() + 0.5, bar.get_y() + bar.get_height() / 2,
+            f"{pct:.1f}%", va="center", fontsize=10, fontweight="bold",
+        )
+
+    # Overall accuracy reference line
+    overall_pct = overall_acc * 100
+    ax.axvline(x=overall_pct, color="#3498db", linestyle="--", linewidth=1.5,
+               label=f"Overall: {overall_pct:.1f}%")
+
+    ax.set_xlabel("Accuracy (%)")
+    ax.set_ylabel("Digit")
+    ax.set_yticks(digits)
+    ax.set_xlim(0, 105)
+    ax.set_title("Per-Class Accuracy")
+    ax.legend(loc="lower right")
+    ax.grid(axis="x", alpha=0.3)
+    ax.invert_yaxis()  # digit 0 at top
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=120)
+    plt.close(fig)
+    print(f"Per-class accuracy chart saved -> {save_path}")
 
 
 if __name__ == "__main__":
