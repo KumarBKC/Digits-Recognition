@@ -247,6 +247,7 @@ class Trainer:
                     "epoch": epoch,
                     "model_state_dict": self.model.state_dict(),
                     "optimizer_state_dict": self.optimizer.state_dict(),
+                    "scheduler_state_dict": self.scheduler.state_dict() if self.scheduler else None,
                     "val_acc": val_acc,
                     "val_loss": val_loss,
                 },
@@ -262,6 +263,7 @@ class Trainer:
                         "epoch": epoch,
                         "model_state_dict": self.model.state_dict(),
                         "optimizer_state_dict": self.optimizer.state_dict(),
+                        "scheduler_state_dict": self.scheduler.state_dict() if self.scheduler else None,
                         "val_acc": val_acc,
                         "val_loss": val_loss,
                     },
@@ -311,10 +313,12 @@ class Trainer:
 
 
     def load_checkpoint(self, path: str) -> dict:
-        """Restore model and optimizer state from a checkpoint file."""
+        """Restore model, optimizer, and scheduler state from a checkpoint file."""
         checkpoint = torch.load(path, map_location=self.device)
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        if "scheduler_state_dict" in checkpoint and checkpoint["scheduler_state_dict"] and self.scheduler:
+            self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         logger.info(
             "Loaded checkpoint from '%s' (epoch=%d, val_acc=%.4f)",
             path,
