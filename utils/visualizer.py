@@ -12,6 +12,8 @@ import seaborn as sns
 import torch
 from torch.utils.data import DataLoader
 
+sns.set_theme(style="whitegrid", palette="muted")
+
 
 def plot_history(history: Dict[str, List[float]], save_path: str = "training_curves.png") -> None:
     """Plot train / val loss and accuracy curves.
