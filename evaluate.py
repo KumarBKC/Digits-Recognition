@@ -86,7 +86,7 @@ def main() -> None:
     )
 
     # Evaluation loop
-    tracker = MetricsTracker()
+    tracker = MetricsTracker(track_logits=True)
     eval_start = time.perf_counter()
     with torch.no_grad():
         for images, labels in val_loader:
@@ -94,7 +94,7 @@ def main() -> None:
             labels_dev = labels.to(device, non_blocking=True)
             logits = model(images)
             preds = logits.argmax(dim=1)
-            tracker.update(preds, labels_dev)
+            tracker.update(preds, labels_dev, logits)
     eval_elapsed = time.perf_counter() - eval_start
     print(f"Evaluation completed in {eval_elapsed:.2f}s")
 
@@ -133,12 +133,17 @@ def main() -> None:
         print(f"{cls:>6}   | {total:>7} | {acc_pct:>7.1f}% | {err_str}")
 
     print(f"\nOverall accuracy: {metrics['accuracy'] * 100:.2f}%")
+    if "top3_accuracy" in metrics:
+        print(f"Top-3 accuracy:   {metrics['top3_accuracy'] * 100:.2f}%")
+        print(f"Top-5 accuracy:   {metrics['top5_accuracy'] * 100:.2f}%")
+
     logger.info(
-        "Evaluation: accuracy=%.4f, precision=%.4f, recall=%.4f, f1=%.4f",
+        "Evaluation: accuracy=%.4f, precision=%.4f, recall=%.4f, f1=%.4f, kappa=%.4f",
         metrics["accuracy"],
         metrics["precision"],
         metrics["recall"],
         metrics["f1_score"],
+        metrics["cohen_kappa"],
     )
 
     summary_path = os.path.join(args.output_dir, "metrics_summary.json")
@@ -147,9 +152,13 @@ def main() -> None:
             {
                 "checkpoint": args.checkpoint,
                 "accuracy": metrics["accuracy"],
+                "top3_accuracy": metrics.get("top3_accuracy"),
+                "top5_accuracy": metrics.get("top5_accuracy"),
                 "precision": metrics["precision"],
                 "recall": metrics["recall"],
                 "f1_score": metrics["f1_score"],
+                "weighted_f1": metrics["weighted_f1"],
+                "cohen_kappa": metrics["cohen_kappa"],
                 "total_samples": metrics["total_samples"],
                 "total_errors": metrics["total_errors"],
                 "eval_seconds": round(eval_elapsed, 3),
