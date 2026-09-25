@@ -17,6 +17,7 @@ from sklearn.metrics import (
     cohen_kappa_score,
     confusion_matrix,
     f1_score,
+    matthews_corrcoef,
     precision_score,
     recall_score,
 )
@@ -124,6 +125,14 @@ class MetricsTracker:
         # Cohen's Kappa — agreement beyond chance
         kappa = float(cohen_kappa_score(labels, preds)) if len(labels) > 0 else 0.0
 
+        # Matthews Correlation Coefficient — balanced metric robust to class imbalance
+        mcc = float(matthews_corrcoef(labels, preds)) if len(labels) > 0 else 0.0
+
+        # Per-class F1 scores for finer-grained analysis
+        per_class_f1 = f1_score(
+            labels, preds, labels=list(range(10)), average=None, zero_division=0
+        ).tolist()
+
         report = classification_report(
             labels,
             preds,
@@ -152,6 +161,8 @@ class MetricsTracker:
             "weighted_recall": weighted_recall,
             "weighted_f1": weighted_f1,
             "cohen_kappa": kappa,
+            "mcc": mcc,
+            "per_class_f1": per_class_f1,
             "confusion_matrix": cm,
             "classification_report": report,
             "top1_errors": top1_errors,
@@ -176,9 +187,24 @@ class MetricsTracker:
             f"Recall:    {m['recall'] * 100:.2f}%  (macro)  |  {m['weighted_recall'] * 100:.2f}%  (weighted)",
             f"F1 Score:  {m['f1_score'] * 100:.2f}%  (macro)  |  {m['weighted_f1'] * 100:.2f}%  (weighted)",
             f"Kappa:     {m['cohen_kappa']:.4f}",
+            f"MCC:       {m['mcc']:.4f}",
         ]
         if "top3_accuracy" in m:
             lines.append(f"Top-3 Acc: {m['top3_accuracy'] * 100:.2f}%")
             lines.append(f"Top-5 Acc: {m['top5_accuracy'] * 100:.2f}%")
         lines.append(f"Samples:   {m['total_samples']:,}  ({m['total_errors']} errors)")
         return "\n".join(lines)
+
+    def to_dict(self) -> Dict:
+        """Return a JSON-serializable dictionary of all scalar metrics.
+
+        Excludes non-serializable fields like the confusion matrix
+        numpy array and the raw error tuples.  Useful for logging
+        to experiment trackers or saving to JSON files.
+        """
+        m = self.compute()
+        serializable = {
+            k: v for k, v in m.items()
+            if k not in ("confusion_matrix", "classification_report", "top1_errors")
+        }
+        return serializable
