@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import math
 import os
 import time
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 
 import torch
 
@@ -34,6 +35,17 @@ class PredictionResult:
         indexed = list(enumerate(self.all_probs))
         indexed.sort(key=lambda x: x[1], reverse=True)
         return [(digit, prob) for digit, prob in indexed[:k]]
+
+    @property
+    def entropy(self) -> float:
+        """Shannon entropy of the probability distribution (in nats).
+
+        Lower entropy indicates more confident predictions.
+        Max entropy for 10 classes is ln(10) ≈ 2.303.
+        """
+        return -sum(
+            p * math.log(p + 1e-12) for p in self.all_probs
+        )
 
     def __repr__(self) -> str:
         return (
@@ -71,6 +83,20 @@ class DigitPredictor:
         self._checkpoint_loss = checkpoint.get("val_loss", None)
 
         self.preprocessor = ImagePreprocessor(device=str(self.device))
+
+    @property
+    def checkpoint_info(self) -> Dict[str, Optional[float]]:
+        """Return metadata about the loaded checkpoint.
+
+        Returns:
+            Dict with ``epoch``, ``val_acc``, ``val_loss``, and ``model_path``.
+        """
+        return {
+            "model_path": self.model_path,
+            "epoch": self._checkpoint_epoch,
+            "val_acc": self._checkpoint_acc,
+            "val_loss": self._checkpoint_loss,
+        }
 
 
 
@@ -148,3 +174,28 @@ class DigitPredictor:
     def is_confident(result: PredictionResult, threshold: float = 0.65) -> bool:
         """Return True if the prediction confidence exceeds the threshold."""
         return result.confidence >= threshold
+
+    @staticmethod
+    def is_uncertain(
+        result: PredictionResult,
+        margin_threshold: float = 0.2,
+        entropy_threshold: float = 1.0,
+    ) -> bool:
+        """Return True if the prediction is ambiguous.
+
+        A prediction is considered uncertain when the confidence margin
+        between the top two classes is below ``margin_threshold`` **or**
+        the entropy exceeds ``entropy_threshold``.
+
+        This is useful for flagging predictions that may need human review.
+
+        Args:
+            result: The prediction result to evaluate.
+            margin_threshold: Minimum gap between top-1 and top-2
+                probabilities (default 0.2).
+            entropy_threshold: Maximum acceptable Shannon entropy
+                (default 1.0 nats).
+        """
+        top2 = result.top_k(2)
+        margin = top2[0][1] - top2[1][1] if len(top2) >= 2 else top2[0][1]
+        return margin < margin_threshold or result.entropy > entropy_threshold
