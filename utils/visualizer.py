@@ -16,10 +16,11 @@ sns.set_theme(style="whitegrid", palette="muted")
 
 
 def plot_history(history: Dict[str, List[float]], save_path: str = "training_curves.png") -> None:
-    """Plot train / val loss and accuracy curves.
+    """Plot train / val loss, accuracy, and learning rate curves.
 
     Args:
-        history: Dict with keys ``train_loss``, ``val_loss``, ``train_acc``, ``val_acc``.
+        history: Dict with keys ``train_loss``, ``val_loss``, ``train_acc``,
+            ``val_acc``, and optionally ``lr`` for learning rate tracking.
         save_path: Where to save the figure.
     """
     epochs = range(1, len(history["train_loss"]) + 1)
@@ -29,7 +30,10 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
     best_epoch = best_idx + 1
     best_val_acc_pct = history["val_acc"][best_idx] * 100
 
-    fig, (ax_loss, ax_acc) = plt.subplots(1, 2, figsize=(12, 5))
+    has_lr = "lr" in history and len(history["lr"]) > 0
+    n_cols = 3 if has_lr else 2
+    fig, axes = plt.subplots(1, n_cols, figsize=(6 * n_cols, 5))
+    ax_loss, ax_acc = axes[0], axes[1]
 
     # Loss
     ax_loss.plot(epochs, history["train_loss"], label="Train loss")
@@ -52,6 +56,19 @@ def plot_history(history: Dict[str, List[float]], save_path: str = "training_cur
     ax_acc.set_title("Accuracy Curves")
     ax_acc.legend()
     ax_acc.grid(True, alpha=0.3)
+
+    # Learning rate schedule
+    if has_lr:
+        ax_lr = axes[2]
+        ax_lr.plot(epochs, history["lr"], color="#e74c3c", linewidth=1.5, label="LR")
+        ax_lr.axvline(x=best_epoch, color="gray", linestyle="--", alpha=0.7,
+                      label=f"Best epoch ({best_epoch})")
+        ax_lr.set_xlabel("Epoch")
+        ax_lr.set_ylabel("Learning Rate")
+        ax_lr.set_title("Learning Rate Schedule")
+        ax_lr.set_yscale("log")
+        ax_lr.legend()
+        ax_lr.grid(True, alpha=0.3)
 
     plt.suptitle(
         f"Training History — best val acc {best_val_acc_pct:.1f}% @ epoch {best_epoch}",
@@ -116,3 +133,70 @@ def plot_confusion_matrix(
     plt.close(fig)
     print(f"Saved confusion matrix -> {save_path}")
 
+
+def plot_sample_predictions(
+    model: torch.nn.Module,
+    val_loader: DataLoader,
+    device: torch.device,
+    n_samples: int = 16,
+    save_path: str = "sample_predictions.png",
+) -> None:
+    """Visualize model predictions on a grid of sample images.
+
+    Correct predictions are shown with green titles, incorrect ones
+    with red titles and the true label.
+
+    Args:
+        model: Trained DigitCNN in eval mode.
+        val_loader: Validation DataLoader.
+        device: Torch device.
+        n_samples: Number of samples to display (default 16).
+        save_path: Output PNG path.
+    """
+    model.eval()
+    images_collected: List[torch.Tensor] = []
+    labels_collected: List[int] = []
+
+    with torch.no_grad():
+        for images, labels in val_loader:
+            images_collected.append(images)
+            labels_collected.extend(labels.tolist())
+            if len(labels_collected) >= n_samples:
+                break
+
+    all_images = torch.cat(images_collected, dim=0)[:n_samples]
+    all_labels = labels_collected[:n_samples]
+
+    all_images_dev = all_images.to(device, non_blocking=True)
+    with torch.no_grad():
+        logits = model(all_images_dev)
+        probs = torch.softmax(logits, dim=1)
+        preds = logits.argmax(dim=1).cpu().tolist()
+        confs = probs.max(dim=1).values.cpu().tolist()
+
+    cols = 4
+    rows = (n_samples + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(3 * cols, 3.5 * rows))
+    axes_flat = axes.flatten() if hasattr(axes, "flatten") else [axes]
+
+    for i in range(n_samples):
+        ax = axes_flat[i]
+        img = all_images[i].squeeze(0).numpy()
+        ax.imshow(img, cmap="gray")
+        ax.axis("off")
+
+        pred, true, conf = preds[i], all_labels[i], confs[i]
+        if pred == true:
+            ax.set_title(f"Pred: {pred} ({conf:.0%})", color="green", fontsize=10)
+        else:
+            ax.set_title(f"Pred: {pred} (True: {true})\n{conf:.0%}", color="red", fontsize=10)
+
+    # Hide unused axes
+    for j in range(n_samples, len(axes_flat)):
+        axes_flat[j].axis("off")
+
+    plt.suptitle("Sample Predictions", fontsize=14)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=120)
+    plt.close(fig)
+    print(f"Saved sample predictions -> {save_path}")
