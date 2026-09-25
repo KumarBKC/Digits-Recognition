@@ -138,12 +138,13 @@ def main() -> None:
         print(f"Top-5 accuracy:   {metrics['top5_accuracy'] * 100:.2f}%")
 
     logger.info(
-        "Evaluation: accuracy=%.4f, precision=%.4f, recall=%.4f, f1=%.4f, kappa=%.4f",
+        "Evaluation: accuracy=%.4f, precision=%.4f, recall=%.4f, f1=%.4f, kappa=%.4f, mcc=%.4f",
         metrics["accuracy"],
         metrics["precision"],
         metrics["recall"],
         metrics["f1_score"],
         metrics["cohen_kappa"],
+        metrics.get("mcc", 0.0),
     )
 
     summary_path = os.path.join(args.output_dir, "metrics_summary.json")
@@ -151,7 +152,11 @@ def main() -> None:
         json.dump(
             {
                 "checkpoint": args.checkpoint,
+                "checkpoint_epoch": checkpoint.get("epoch"),
+                "device": str(device),
+                "model_parameters": model.count_parameters(),
                 "accuracy": metrics["accuracy"],
+                "error_rate": metrics["error_rate"],
                 "top3_accuracy": metrics.get("top3_accuracy"),
                 "top5_accuracy": metrics.get("top5_accuracy"),
                 "precision": metrics["precision"],
@@ -159,6 +164,8 @@ def main() -> None:
                 "f1_score": metrics["f1_score"],
                 "weighted_f1": metrics["weighted_f1"],
                 "cohen_kappa": metrics["cohen_kappa"],
+                "mcc": metrics.get("mcc"),
+                "per_class_f1": metrics.get("per_class_f1"),
                 "total_samples": metrics["total_samples"],
                 "total_errors": metrics["total_errors"],
                 "eval_seconds": round(eval_elapsed, 3),
@@ -172,12 +179,14 @@ def main() -> None:
     csv_path = os.path.join(args.output_dir, "per_class_accuracy.csv")
     with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["digit", "samples", "correct", "accuracy_pct", "top_misclassified_as", "misclass_pct"])
+        writer.writerow(["digit", "samples", "correct", "errors", "accuracy_pct", "error_rate_pct", "top_misclassified_as", "misclass_pct"])
         for cls in range(10):
             row = cm[cls]
             total = int(row.sum())
             correct = int(row[cls])
+            num_errors = total - correct
             acc_pct = round(per_class_acc[cls] * 100, 2)
+            err_rate_pct = round((1.0 - per_class_acc[cls]) * 100, 2) if total > 0 else 0.0
             errors = [(i, row[i]) for i in range(10) if i != cls and row[i] > 0]
             errors.sort(key=lambda x: x[1], reverse=True)
             if errors:
@@ -185,7 +194,7 @@ def main() -> None:
                 misclass_pct = round(top_err_cnt / max(total, 1) * 100, 2)
             else:
                 top_err_cls, misclass_pct = "", 0.0
-            writer.writerow([cls, total, correct, acc_pct, top_err_cls, misclass_pct])
+            writer.writerow([cls, total, correct, num_errors, acc_pct, err_rate_pct, top_err_cls, misclass_pct])
     print(f"Per-class accuracy CSV saved -> {csv_path}")
 
     # Confusion matrix plot
