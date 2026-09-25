@@ -8,6 +8,8 @@ Optimized with:
 
 from __future__ import annotations
 
+from typing import Dict, List, Tuple
+
 
 
 import torch
@@ -188,3 +190,51 @@ class DigitCNN(nn.Module):
         except StopIteration:
             return torch.device("cpu")
 
+    def get_layer_info(self) -> List[Dict[str, object]]:
+        """Return per-layer information for architecture introspection.
+
+        Each entry contains the layer name, type, parameter count,
+        and whether the layer is trainable.
+
+        Returns:
+            List of dicts with keys ``name``, ``type``, ``params``,
+            ``trainable``.
+        """
+        info: List[Dict[str, object]] = []
+        for name, module in self.named_modules():
+            if name == "":
+                continue  # skip the top-level module itself
+            params = sum(p.numel() for p in module.parameters(recurse=False))
+            trainable = any(p.requires_grad for p in module.parameters(recurse=False))
+            info.append({
+                "name": name,
+                "type": module.__class__.__name__,
+                "params": params,
+                "trainable": trainable,
+            })
+        return info
+
+    def model_summary(self) -> str:
+        """Return a formatted string summarising the model architecture.
+
+        Includes per-layer parameter counts and a total at the bottom.
+        Useful for quick architecture review and documentation.
+        """
+        header = f"{'Layer':<40} {'Type':<20} {'Params':>10}"
+        sep = "-" * 72
+        lines = [sep, header, sep]
+
+        for entry in self.get_layer_info():
+            if entry["params"] > 0:  # only show layers with parameters
+                lines.append(
+                    f"{entry['name']:<40} {entry['type']:<20} {entry['params']:>10,}"
+                )
+
+        lines.append(sep)
+        total = self.count_parameters(only_trainable=True)
+        frozen = self.count_parameters(only_trainable=False) - total
+        lines.append(f"Total trainable params:     {total:>10,}")
+        if frozen > 0:
+            lines.append(f"Total frozen params:        {frozen:>10,}")
+        lines.append(sep)
+        return "\n".join(lines)
