@@ -182,11 +182,13 @@ class Trainer:
             "train_acc": [],
             "val_acc": [],
             "lr": [],
+            "epoch_time": [],
         }
 
         best_val_acc = 0.0
         start_epoch = 1
         epochs_without_improvement = 0
+        training_start_time = time.perf_counter()
         checkpoint_path = os.path.join(self.checkpoint_dir, "best_model.pth")
         last_checkpoint_path = os.path.join(self.checkpoint_dir, "last_model.pth")
 
@@ -222,6 +224,7 @@ class Trainer:
             history["train_acc"].append(train_acc)
             history["val_acc"].append(val_acc)
             history["lr"].append(current_lr)
+            history["epoch_time"].append(epoch_elapsed)
 
             logger.info(
                 "Epoch %03d | train_loss=%.4f  train_acc=%.4f | "
@@ -285,16 +288,27 @@ class Trainer:
                     break
 
         # Training summary
+        total_training_time = time.perf_counter() - training_start_time
         total_epochs = len(history["train_loss"])
         if total_epochs > 0:
             best_epoch = int(max(range(total_epochs), key=lambda i: history["val_acc"][i])) + start_epoch
         else:
             best_epoch = start_epoch
         logger.info(
-            "Training complete — %d epochs (started at %d), best val_acc=%.4f at epoch %d",
-            total_epochs, start_epoch, best_val_acc, best_epoch,
+            "Training complete — %d epochs (started at %d), best val_acc=%.4f at epoch %d, "
+            "total time=%.1fs",
+            total_epochs, start_epoch, best_val_acc, best_epoch, total_training_time,
         )
         resumed_str = f" (resumed from epoch {start_epoch})" if start_epoch > 1 else ""
+        avg_epoch_time = total_training_time / max(total_epochs, 1)
+        # Format total time as human-readable
+        if total_training_time >= 3600:
+            time_str = f"{total_training_time / 3600:.1f}h"
+        elif total_training_time >= 60:
+            time_str = f"{total_training_time / 60:.1f}m"
+        else:
+            time_str = f"{total_training_time:.1f}s"
+
         print(f"\n{'='*55}")
         print(f"  Training Summary{resumed_str}")
         print(f"{'='*55}")
@@ -306,6 +320,8 @@ class Trainer:
             print(f"  Final train loss:      {history['train_loss'][-1]:.4f}")
             print(f"  Final val loss:        {history['val_loss'][-1]:.4f}")
         print(f"  Final learning rate:   {self.optimizer.param_groups[0]['lr']:.2e}")
+        print(f"  Total training time:   {time_str}")
+        print(f"  Avg time per epoch:    {avg_epoch_time:.1f}s")
         print(f"{'='*55}\n")
 
         return history
